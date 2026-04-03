@@ -1,0 +1,40 @@
+# Application Configuration
+# This file uses environment variable interpolation with ${VAR} syntax
+
+app:
+  # Application name
+  name: "mall-chat-service"
+  # HTTP server port
+  port: 3000
+  # Environment: development, production, test
+  env: development
+
+# Database configuration
+database:
+  # PostgreSQL connection URL from environment
+  url: "${DATABASE_URL}"
+
+# Redis configuration
+redis:
+  # Redis host from environment
+  host: "${REDIS_HOST}"
+  # Redis port from environment
+  port: "${REDIS_PORT}"
+
+# Dify AI integration configuration
+dify:
+  # Dify API base URL
+  baseUrl: "${DIFY_BASE_URL}"
+  # Dify API key for authentication
+  apiKey: "${DIFY_API_KEY}"
+  # Dify application ID
+  appId: "${DIFY_APP_ID}"
+  # Request timeout in milliseconds
+  timeout: 30000
+
+# Logging configuration
+log:
+  # Log level from environment (trace, debug, info, warn, error, fatal)
+  level: "${LOG_LEVEL}"
+  # Log format: json or text
+  format: json

@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户（通过手机号识别）
+model User {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sessions  ChatSession[]
+}
+
+// 店铺/商户
+model Store {
+  id        String    @id @default(uuid())
+  name      String
+  storeType StoreType
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  sessions  ChatSession[]
+}
+
+enum StoreType {
+  SELF       // 自营
+  MERCHANT   // 第三方店铺
+}
+
+// 聊天会话
+model ChatSession {
+  id                  String        @id @default(uuid())
+  userId              String
+  user                User          @relation(fields: [userId], references: [id])
+  storeId             String
+  store               Store         @relation(fields: [storeId], references: [id])
+  storeType           StoreType
+  channel             String        // 小程序/H5/App
+  difyConversationId String?       // Dify 会话ID
+  status              SessionStatus @default(OPEN)
+  lastActiveAt        DateTime      @default(now())
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  messages       ChatMessage[]
+  handoffTickets HandoffTicket[]
+}
+
+enum SessionStatus {
+  OPEN     // AI 对话中
+  HANDOFF  // 已转人工
+  CLOSED   // 会话已关闭
+}
+
+// 聊天消息
+model ChatMessage {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  senderType  SenderType
+  content     String
+  messageType MessageType @default(TEXT)
+  rawPayload  Json?       // Dify 原始响应
+  createdAt   DateTime   @default(now())
+}
+
+enum SenderType {
+  USER    // 用户
+  AI      // AI
+  HUMAN   // 人工客服
+  SYSTEM  // 系统消息
+}
+
+enum MessageType {
+  TEXT   // 文本
+  EVENT  // 事件（如转人工）
+  CARD   // 卡片（如订单卡片）
+}
+
+// 转人工工单
+model HandoffTicket {
+  id              String        @id @default(uuid())
+  sessionId       String
+  session         ChatSession   @relation(fields: [sessionId], references: [id])
+  status          HandoffStatus @default(PENDING)
+  queueNo         Int           // 排队号
+  assignedAgentId String?       // 分配的客服ID
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum HandoffStatus {
+  PENDING  // 待接单
+  ANSWERED // 已接单
+  CLOSED   // 已关闭
+}
