@@ -194,6 +194,23 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
   };
 
+  const userInfoStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '24px',
+    padding: '16px',
+    background: 'linear-gradient(135deg, #f0f5ff 0%, #f5f0ff 100%)',
+    borderRadius: '16px',
+    border: '1px solid #e0e5ff',
+  };
+
+  const userInfoLeftStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+  };
+
   const avatarStyle: React.CSSProperties = {
     width: '48px',
     height: '48px',
@@ -227,18 +244,16 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
   };
 
   const storeTagStyle: React.CSSProperties = {
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '8px',
-    padding: '10px 16px',
-    background: 'linear-gradient(135deg, #f0f5ff 0%, #f5f0ff 100%)',
-    borderRadius: '12px',
-    fontSize: '14px',
-    color: '#667eea',
-    border: '1px solid #e0e5ff',
-    marginBottom: '20px',
-    fontWeight: 500,
+    gap: '4px',
+    padding: '6px 12px',
+    background: '#fff',
+    borderRadius: '20px',
+    fontSize: '12px',
+    color: '#764ba2',
+    border: '1px solid #e0d8ff',
+    marginTop: '6px',
   };
 
   const logoutBtnStyle: React.CSSProperties = {
@@ -249,74 +264,6 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
     background: '#fff',
     border: '1.5px solid #667eea',
     borderRadius: '24px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  };
-
-  const storeSelectStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '14px',
-    fontSize: '15px',
-    border: '1px solid #ddd',
-    borderRadius: '12px',
-    marginBottom: '24px',
-    background: '#fff',
-    cursor: 'pointer',
-    appearance: 'none',
-    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 16px center',
-    paddingRight: '40px',
-  };
-
-  const deleteBtnStyle: React.CSSProperties = {
-    position: 'absolute',
-    right: '8px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    width: '28px',
-    height: '28px',
-    borderRadius: '8px',
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#9ca3af',
-    transition: 'all 0.2s ease',
-  };
-
-  const topBarStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '20px',
-    padding: '12px 16px',
-    background: 'linear-gradient(135deg, #f8faff 0%, #f5f3ff 100%)',
-    borderRadius: '12px',
-    border: '1px solid #e5e7eb',
-  };
-
-  const topBarLeftStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  };
-
-  const topBarRightStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  };
-
-  const topBarBtnStyle: React.CSSProperties = {
-    padding: '8px 14px',
-    borderRadius: '8px',
-    border: '1px solid #e5e7eb',
-    background: '#fff',
-    color: '#6b7280',
-    fontSize: '13px',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
   };
@@ -395,50 +342,46 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
 
       {!isStarted ? (
         <div style={startCardStyle}>
-          {/* 顶部操作栏 */}
-          <div style={topBarStyle}>
-            <div style={topBarLeftStyle}>
+          {/* 用户信息 */}
+          <div style={userInfoStyle}>
+            <div style={userInfoLeftStyle}>
               <div style={avatarStyle}>👤</div>
               <div style={userTextStyle}>
                 <div style={userNameStyle}>已登录用户</div>
                 <div style={userPhoneStyle}>📱 {phone}</div>
+                {selectedStore && (
+                  <div style={storeTagStyle}>
+                    🏪 {selectedStore.name}
+                  </div>
+                )}
               </div>
             </div>
-            <div style={topBarRightStyle}>
-              <button
-                onClick={handleLogout}
-                style={topBarBtnStyle}
-              >
-                登出
-              </button>
-            </div>
+            <button onClick={handleLogout} style={logoutBtnStyle}>
+              登出
+            </button>
           </div>
 
-          {/* 当前店铺标签 */}
-          {selectedStore && (
-            <div style={storeTagStyle}>
-              🏪 {selectedStore.name}
-              <button
-                onClick={() => setDeleteConfirmStore(selectedStore)}
-                style={deleteBtnStyle}
-                title="删除店铺"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                </svg>
-              </button>
-            </div>
-          )}
-
           {/* 店铺选择 */}
-          <div style={{ position: 'relative', marginBottom: '24px' }}>
+          <div style={{ position: 'relative', display: 'inline-block', width: '100%', marginBottom: '24px' }}>
             <select
               value={selectedStore?.id || ''}
               onChange={(e) => {
                 const store = stores.find(s => s.id === e.target.value);
                 if (store) handleStoreChange(store);
               }}
-              style={storeSelectStyle}
+              style={{
+                width: '100%',
+                padding: '14px 40px 14px 14px',
+                fontSize: '15px',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                background: '#fff',
+                cursor: 'pointer',
+                appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 14px center',
+              }}
             >
               {stores.length === 0 && <option value="">暂无店铺</option>}
               {stores.map(store => (
@@ -447,6 +390,40 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
                 </option>
               ))}
             </select>
+            {/* 删除按钮 - 集成在选择器右侧 */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const store = stores.find(s => s.id === selectedStore?.id);
+                if (store) setDeleteConfirmStore(store);
+              }}
+              style={{
+                position: 'absolute',
+                right: '36px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'transparent',
+                border: 'none',
+                color: '#9ca3af',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'color 0.2s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#9ca3af')}
+              title="删除当前店铺"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18"/>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+            </button>
           </div>
 
           <button
@@ -489,32 +466,68 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
+          animation: 'fadeIn 0.2s ease',
         }} onClick={() => setDeleteConfirmStore(null)}>
           <div style={{
             background: '#fff',
-            borderRadius: '12px',
-            padding: '24px',
-            maxWidth: '360px',
+            borderRadius: '16px',
+            padding: '28px 32px',
+            maxWidth: '380px',
+            width: '90%',
             textAlign: 'center',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            animation: 'scaleIn 0.2s ease',
           }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 16px', color: '#333' }}>确认删除</h3>
-            <p style={{ margin: '0 0 24px', color: '#666' }}>
-              确定删除店铺「{deleteConfirmStore.name}」吗？删除后该店铺的所有会话记录将被一并删除。
+            {/* 图标 */}
+            <div style={{
+              width: '56px',
+              height: '56px',
+              margin: '0 auto 20px',
+              background: '#fef2f2',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18"/>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+              </svg>
+            </div>
+            <h3 style={{ margin: '0 0 12px', color: '#1f2937', fontSize: '18px', fontWeight: 600 }}>确认删除</h3>
+            <p style={{ margin: '0 0 28px', color: '#6b7280', fontSize: '14px', lineHeight: 1.6 }}>
+              确定删除店铺「<span style={{ color: '#374151', fontWeight: 500 }}>{deleteConfirmStore.name}</span>」吗？
+              <br/>
+              <span style={{ color: '#9ca3af', fontSize: '13px' }}>删除后该店铺的所有会话记录将被一并删除</span>
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 onClick={() => setDeleteConfirmStore(null)}
                 style={{
-                  padding: '8px 24px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
+                  padding: '10px 28px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '10px',
                   background: '#fff',
+                  color: '#374151',
+                  fontSize: '14px',
+                  fontWeight: 500,
                   cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f9fafb';
+                  e.currentTarget.style.borderColor = '#d1d5db';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#fff';
+                  e.currentTarget.style.borderColor = '#e5e7eb';
                 }}
               >
                 取消
@@ -522,12 +535,24 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
               <button
                 onClick={() => handleDeleteStore(deleteConfirmStore)}
                 style={{
-                  padding: '8px 24px',
+                  padding: '10px 28px',
                   border: 'none',
-                  borderRadius: '6px',
-                  background: '#ff4d4f',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                   color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: 500,
                   cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
                 }}
               >
                 删除
