@@ -8,20 +8,6 @@ Mall Chat Service 是一个基于 NestJS 的商城智能客服系统，集成 Di
 
 ## 开发命令
 
-### 一键启动（开发模式）
-```bash
-# 方式1: 使用 && 串行启动（先启动后端再启动前端）
-pnpm run start:dev & cd frontend && pnpm run dev
-
-# 方式2: 两个终端分别执行：
-# 终端1: pnpm run start:dev      # 后端 http://localhost:3000
-# 终端2: cd frontend && pnpm run dev  # 前端 http://localhost:5173
-
-# 方式3: 后台运行（推荐）
-pnpm run start:dev &
-(cd frontend && pnpm run dev &)
-```
-
 ### 后端 (NestJS)
 ```bash
 # 安装依赖
@@ -58,6 +44,16 @@ npx prisma migrate dev
 
 # 生成 Prisma 客户端
 npx prisma generate
+```
+
+### 启动项目
+
+```bash
+# 终端1：启动后端 (http://localhost:3000)
+pnpm run start:dev
+
+# 终端2：启动前端 (http://localhost:5173)
+cd frontend && pnpm run dev
 ```
 
 ## 项目架构
@@ -220,3 +216,47 @@ src/modules/order/
 - **先跑通再优化**: 第一版用 Mock 数据，确保链路可跑通
 - **预留扩展点**: 代码结构支持后续添加售后、优惠券、商品查询等功能
 - **不破坏现有功能**: 新增功能不影响已有的 Dify 多轮会话逻辑
+
+### 8. 级联删除注意
+
+**问题**: 删除店铺时，`HandoffTicket` 与 `ChatSession` 没有配置级联删除，导致外键约束报错。
+
+**解决方案**: 在删除 `ChatSession` 前，先删除关联的 `HandoffTicket`：
+
+```typescript
+// store.service.ts
+async deleteStore(id: string): Promise<void> {
+  const sessions = await this.prisma.chatSession.findMany({
+    where: { storeId: id },
+    select: { id: true },
+  });
+  const sessionIds = sessions.map(s => s.id);
+  // 先删除关联的转人工工单
+  if (sessionIds.length > 0) {
+    await this.prisma.handoffTicket.deleteMany({
+      where: { sessionId: { in: sessionIds } },
+    });
+  }
+  // 删除会话（Messages 会级联删除）
+  await this.prisma.chatSession.deleteMany({ where: { storeId: id } });
+  // 删除店铺
+  await this.prisma.store.delete({ where: { id } });
+}
+```
+
+### 9. Dify inputs 类型转换
+
+**问题**: 前端发送的 `store_type` 是大写 `"SELF" | "MERCHANT"`，但 Dify 需要小写 `"self" | "merchant"`。
+
+**解决方案**: 在前端将 `store_type` 转换为小写：
+
+```typescript
+// useChat.ts
+store_type: configRef.current.storeType.toLowerCase() as 'self' | 'merchant',
+```
+
+### 10. CSS 语法错误检查
+
+**问题**: `chat.css` 中出现重复的 CSS 代码块导致语法错误，样式不生效。
+
+**解决**: 定期检查 CSS 文件，确保没有重复的代码块。可以用构建工具的 CSS 校验功能。
