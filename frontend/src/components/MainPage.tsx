@@ -194,23 +194,6 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
   };
 
-  const userInfoStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '24px',
-    padding: '16px',
-    background: 'linear-gradient(135deg, #f0f5ff 0%, #f5f0ff 100%)',
-    borderRadius: '16px',
-    border: '1px solid #e0e5ff',
-  };
-
-  const userInfoLeftStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-  };
-
   const avatarStyle: React.CSSProperties = {
     width: '48px',
     height: '48px',
@@ -244,16 +227,18 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
   };
 
   const storeTagStyle: React.CSSProperties = {
-    display: 'inline-flex',
+    display: 'flex',
     alignItems: 'center',
-    gap: '4px',
-    padding: '6px 12px',
-    background: '#fff',
-    borderRadius: '20px',
-    fontSize: '12px',
-    color: '#764ba2',
-    border: '1px solid #e0d8ff',
-    marginTop: '6px',
+    justifyContent: 'space-between',
+    gap: '8px',
+    padding: '10px 16px',
+    background: 'linear-gradient(135deg, #f0f5ff 0%, #f5f0ff 100%)',
+    borderRadius: '12px',
+    fontSize: '14px',
+    color: '#667eea',
+    border: '1px solid #e0e5ff',
+    marginBottom: '20px',
+    fontWeight: 500,
   };
 
   const logoutBtnStyle: React.CSSProperties = {
@@ -277,6 +262,63 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
     marginBottom: '24px',
     background: '#fff',
     cursor: 'pointer',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 16px center',
+    paddingRight: '40px',
+  };
+
+  const deleteBtnStyle: React.CSSProperties = {
+    position: 'absolute',
+    right: '8px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '28px',
+    height: '28px',
+    borderRadius: '8px',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#9ca3af',
+    transition: 'all 0.2s ease',
+  };
+
+  const topBarStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '20px',
+    padding: '12px 16px',
+    background: 'linear-gradient(135deg, #f8faff 0%, #f5f3ff 100%)',
+    borderRadius: '12px',
+    border: '1px solid #e5e7eb',
+  };
+
+  const topBarLeftStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  };
+
+  const topBarRightStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  };
+
+  const topBarBtnStyle: React.CSSProperties = {
+    padding: '8px 14px',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb',
+    background: '#fff',
+    color: '#6b7280',
+    fontSize: '13px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
   };
 
   const startButtonStyle: React.CSSProperties = {
@@ -353,27 +395,43 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
 
       {!isStarted ? (
         <div style={startCardStyle}>
-          {/* 用户信息 */}
-          <div style={userInfoStyle}>
-            <div style={userInfoLeftStyle}>
+          {/* 顶部操作栏 */}
+          <div style={topBarStyle}>
+            <div style={topBarLeftStyle}>
               <div style={avatarStyle}>👤</div>
               <div style={userTextStyle}>
                 <div style={userNameStyle}>已登录用户</div>
                 <div style={userPhoneStyle}>📱 {phone}</div>
-                {selectedStore && (
-                  <div style={storeTagStyle}>
-                    🏪 {selectedStore.name}
-                  </div>
-                )}
               </div>
             </div>
-            <button onClick={handleLogout} style={logoutBtnStyle}>
-              登出
-            </button>
+            <div style={topBarRightStyle}>
+              <button
+                onClick={handleLogout}
+                style={topBarBtnStyle}
+              >
+                登出
+              </button>
+            </div>
           </div>
 
+          {/* 当前店铺标签 */}
+          {selectedStore && (
+            <div style={storeTagStyle}>
+              🏪 {selectedStore.name}
+              <button
+                onClick={() => setDeleteConfirmStore(selectedStore)}
+                style={deleteBtnStyle}
+                title="删除店铺"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* 店铺选择 */}
-          <div style={{ position: 'relative', display: 'inline-block' }}>
+          <div style={{ position: 'relative', marginBottom: '24px' }}>
             <select
               value={selectedStore?.id || ''}
               onChange={(e) => {
@@ -389,28 +447,6 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
                 </option>
               ))}
             </select>
-            {/* 删除按钮 */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const store = stores.find(s => s.id === selectedStore?.id);
-                if (store) setDeleteConfirmStore(store);
-              }}
-              style={{
-                position: 'absolute',
-                right: '30px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'transparent',
-                border: 'none',
-                color: '#999',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-              title="删除当前店铺"
-            >
-              🗑️
-            </button>
           </div>
 
           <button
