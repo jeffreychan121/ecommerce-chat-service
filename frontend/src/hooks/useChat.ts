@@ -2,6 +2,50 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { createSession, sendMessage, handoff, getMessages, updateSessionStatus } from '../services/api';
 import type { CreateSessionRequest, SendMessageRequest } from '../types';
 
+// 转换 markdown 表格为普通文本
+function convertMarkdownToText(content: string): string {
+  const lines = content.trim().split('\n');
+  let result = '';
+  let inTable = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // 检测表格行（包含 | 且有 | 分隔）
+    if (trimmed.includes('|') && (trimmed.startsWith('|') || trimmed.endsWith('|'))) {
+      // 跳过表头分隔行 (---|:)
+      if (trimmed.match(/^[\|:\-\s]+$/)) {
+        continue;
+      }
+
+      inTable = true;
+      const cells = trimmed.split('|').filter(c => c.trim());
+      // 过滤掉分隔符（包含 - 或 : 的行）
+      if (cells.every(c => c.match(/^[\s:\-]+$/))) {
+        continue;
+      }
+      result += cells.map(c => c.trim()).join('  ') + '\n';
+    } else {
+      if (inTable) {
+        result += '\n';
+        inTable = false;
+      }
+      // 处理普通标题 (# ## ###)
+      let processedLine = trimmed
+        .replace(/^#{1,6}\s+/, '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/`$/, '');
+      if (processedLine) {
+        result += processedLine + '\n';
+      }
+    }
+  }
+
+  return result.trim() || content;
+}
+
 interface ChatMessage {
   type: string;
   content: string;
@@ -140,14 +184,24 @@ export function useChat(options: UseChatOptions): UseChatReturn {
           channel: configRef.current.channel,
         },
       };
+      console.log('>>> [前端] 发送消息请求:', {
+        sessionId,
+        message: content,
+        phone: requestData.inputs.phone,
+        store_id: requestData.inputs.store_id,
+        store_type: requestData.inputs.store_type,
+        channel: requestData.inputs.channel,
+      });
 
       const response = await sendMessage(sessionId, requestData);
+      console.log('>>> [前端] 发送消息响应:', response);
 
       // 添加 AI 回复
       if (response.answer || response.message) {
+        const rawContent = response.answer || response.message || '';
         const aiMessage: ChatMessage = {
           type: 'text',
-          content: response.answer || response.message || '',
+          content: convertMarkdownToText(rawContent),
           position: 'left',
           timestamp: Date.now(),
         };
@@ -162,8 +216,10 @@ export function useChat(options: UseChatOptions): UseChatReturn {
         }
       }
     } catch (error: any) {
-      console.error('Failed to send message:', error);
-      console.error('Error response:', error.response?.data);
+      console.error('>>> [前端] 发送消息失败:', error);
+      console.error('>>> [前端] 错误状态:', error.response?.status);
+      console.error('>>> [前端] 错误数据:', error.response?.data);
+      console.error('>>> [前端] 错误信息:', error.message);
 
       const errorMessage: ChatMessage = {
         type: 'text',
