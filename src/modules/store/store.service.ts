@@ -56,6 +56,14 @@ export class StoreService {
     });
   }
 
+  // 更新店铺信息
+  async update(id: string, data: Partial<Store>): Promise<Store> {
+    return this.prisma.store.update({
+      where: { id },
+      data,
+    });
+  }
+
   // 删除店铺及其关联数据
   async deleteStore(id: string): Promise<void> {
     // 先检查店铺是否存在
