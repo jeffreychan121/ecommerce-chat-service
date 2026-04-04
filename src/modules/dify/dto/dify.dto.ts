@@ -5,6 +5,7 @@ export class DifyInputs {
   store_type: 'self' | 'merchant';
   channel: string;
   customer_id?: string;
+  dataset_id?: string; // 知识库ID，用于商家知识库测试
 }
 
 // 发送消息 DTO

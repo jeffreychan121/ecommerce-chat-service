@@ -11,7 +11,9 @@ import { HandoffModule } from './modules/handoff/handoff.module';
 import { UserModule } from './modules/user/user.module';
 import { StoreModule } from './modules/store/store.module';
 import { OrderModule } from './modules/order/order.module';
-import { LogisticsModule } from './modules/logistics/logistics.module';
+import { IntentRouterModule } from './modules/intent-router/intent-router.module';
+import { AgentModule } from './modules/agent/agent.module';
+import { MerchantModule } from './modules/merchant/merchant.module';
 
 @Module({
   imports: [
@@ -28,7 +30,9 @@ import { LogisticsModule } from './modules/logistics/logistics.module';
     UserModule,
     StoreModule,
     OrderModule,
-    LogisticsModule,
+    IntentRouterModule,
+    AgentModule,
+    MerchantModule,
   ],
 })
 export class AppModule {}
