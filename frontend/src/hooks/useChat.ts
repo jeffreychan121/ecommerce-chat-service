@@ -175,22 +175,23 @@ export function useChat(options: UseChatOptions): UseChatReturn {
     setIsLoading(true);
 
     try {
+      const inputs = {
+        phone: configRef.current.phone,
+        store_id: configRef.current.storeId,
+        store_type: configRef.current.storeType.toLowerCase() as 'self' | 'merchant',
+        channel: configRef.current.channel,
+      };
       const requestData: SendMessageRequest = {
         message: content,
-        inputs: {
-          phone: configRef.current.phone,
-          store_id: configRef.current.storeId,
-          store_type: configRef.current.storeType.toLowerCase() as 'self' | 'merchant',
-          channel: configRef.current.channel,
-        },
+        inputs,
       };
       console.log('>>> [前端] 发送消息请求:', {
         sessionId,
         message: content,
-        phone: requestData.inputs.phone,
-        store_id: requestData.inputs.store_id,
-        store_type: requestData.inputs.store_type,
-        channel: requestData.inputs.channel,
+        phone: inputs.phone,
+        store_id: inputs.store_id,
+        store_type: inputs.store_type,
+        channel: inputs.channel,
       });
 
       const response = await sendMessage(sessionId, requestData);

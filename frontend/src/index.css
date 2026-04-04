@@ -41,3 +41,221 @@ input,
 textarea {
   font-family: inherit;
 }
+
+/* ===== 商家知识库训练页面样式 ===== */
+.merchant-training {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.merchant-training .mt-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.merchant-training .mt-header .back-btn {
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.merchant-training .mt-header .store-info h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+}
+
+.merchant-training .mt-header .store-info .store-name {
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+}
+
+.merchant-training .mt-tabs {
+  display: flex;
+  padding: 16px 20px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.merchant-training .mt-tabs button {
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.merchant-training .mt-tabs button.active {
+  background: #667eea;
+  border-color: #667eea;
+  color: #fff;
+}
+
+.merchant-training .mt-section {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+}
+
+/* 上传区域 */
+.merchant-training .upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+}
+
+.merchant-training .upload-area input[type="file"] {
+  display: none;
+}
+
+.merchant-training .upload-area .upload-label {
+  display: inline-block;
+  padding: 16px 32px;
+  background: #667eea;
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.merchant-training .upload-area .hint {
+  margin-top: 16px;
+  color: rgba(255,255,255,0.5);
+  font-size: 14px;
+}
+
+/* 文件列表 */
+.merchant-training .file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.merchant-training .file-list .empty {
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  padding: 40px;
+}
+
+.merchant-training .file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+}
+
+.merchant-training .file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.merchant-training .file-name {
+  color: #fff;
+}
+
+.merchant-training .status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.merchant-training .status-pending { background: rgba(255,255,255,0.2); }
+.merchant-training .status-processing { background: #f59e0b; }
+.merchant-training .status-completed { background: #10b981; }
+.merchant-training .status-failed { background: #ef4444; }
+
+.merchant-training .file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.merchant-training .file-actions button {
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.merchant-training .file-actions button:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* 聊天窗口 */
+.merchant-training .chat-window {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  max-height: 400px;
+  overflow: auto;
+}
+
+.merchant-training .chat-message {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  line-height: 1.5;
+}
+
+.merchant-training .chat-message.left {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.merchant-training .chat-message.right {
+  align-self: flex-end;
+  background: #667eea;
+  color: #fff;
+}
+
+.merchant-training .chat-input {
+  display: flex;
+  gap: 12px;
+}
+
+.merchant-training .chat-input input {
+  flex: 1;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: #fff;
+}
+
+.merchant-training .chat-input input::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+
+.merchant-training .chat-input button {
+  padding: 12px 24px;
+  background: #667eea;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+}

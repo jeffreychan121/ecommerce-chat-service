@@ -149,4 +149,36 @@ export async function getOrders(limit: number = 20): Promise<OrderInfo[]> {
   return response.data;
 }
 
+// ===== 商家知识库相关 =====
+
+// 上传文件
+export const uploadTrainingFile = async (storeId: string, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('storeId', storeId);
+  return api.post('/api/merchant/files/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
+// 获取文件列表
+export const getTrainingFiles = (storeId: string) =>
+  api.get(`/api/merchant/files/${storeId}`);
+
+// 删除文件
+export const deleteTrainingFile = (jobId: string) =>
+  api.delete(`/api/merchant/files/${jobId}`);
+
+// 训练文件
+export const trainFile = (jobId: string) =>
+  api.post(`/api/merchant/files/${jobId}/train`);
+
+// 训练所有文件
+export const trainAllFiles = (storeId: string) =>
+  api.post(`/api/merchant/files/${storeId}/train-all`);
+
+// AI 测试聊天
+export const chatWithKnowledge = (storeId: string, query: string) =>
+  api.post('/api/merchant/chat', { storeId, query });
+
 export default api;

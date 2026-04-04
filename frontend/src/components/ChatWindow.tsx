@@ -14,6 +14,10 @@ interface ChatWindowProps {
   onHandoff?: () => void;
   onReturnToAI?: () => void;
   title?: string;
+  phone?: string;
+  storeId?: string;
+  storeName?: string;
+  storeType?: 'SELF' | 'MERCHANT';
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -24,6 +28,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onHandoff,
   onReturnToAI,
   title = '智能客服',
+  phone,
+  storeId,
+  storeName,
+  storeType,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -34,7 +42,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   }, [messages, isLoading]);
 
   const handleSend = () => {
-    if (inputValue.trim() && !isHandoff && !isLoading) {
+    // 转人工后也可以发送消息（发送给人工客服）
+    if (inputValue.trim() && !isLoading) {
       onSend(inputValue.trim());
       setInputValue('');
     }
@@ -58,6 +67,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         isHandoff={isHandoff}
         onHandoff={onHandoff}
         onReturnToAI={onReturnToAI}
+        phone={phone}
+        storeId={storeId}
+        storeName={storeName}
+        storeType={storeType}
       />
 
       {/* 消息列表区域 */}
@@ -86,8 +99,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         onChange={setInputValue}
         onSend={handleSend}
         onKeyPress={handleKeyPress}
-        disabled={isHandoff || isLoading}
-        placeholder={isHandoff ? '已转接人工，请稍候...' : '请输入消息...'}
+        disabled={isLoading}
+        placeholder={isHandoff ? '正在与人工客服对话中...' : '请输入消息...'}
       />
     </div>
   );

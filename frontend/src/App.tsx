@@ -2,16 +2,22 @@ import { useState, useEffect } from 'react';
 import LoginPage from './components/LoginPage';
 import MainPage from './components/MainPage';
 import OrderTest from './components/OrderTest';
+import MerchantTraining from './components/MerchantTraining';
 
 interface UserInfo {
   userId: string;
   phone: string;
+  storeId?: string;
+  storeName?: string;
 }
 
 function App() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showOrderTest, setShowOrderTest] = useState(false);
+  const [showMerchantTraining, setShowMerchantTraining] = useState(false);
+  const [trainingStoreId, setTrainingStoreId] = useState('');
+  const [trainingStoreName, setTrainingStoreName] = useState('');
 
   // 检查 localStorage 中是否有登录信息
   useEffect(() => {
@@ -92,6 +98,40 @@ function App() {
       >
         订单测试
       </button>
+      <button
+        onClick={() => {
+          setTrainingStoreId(userInfo.storeId || '');
+          setTrainingStoreName(userInfo.storeName || '商家知识库');
+          setShowMerchantTraining(true);
+        }}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '130px',
+          padding: '10px 20px',
+          background: 'rgba(255,255,255,0.2)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.3)',
+          borderRadius: '20px',
+          cursor: 'pointer',
+          zIndex: 1000,
+          color: '#fff',
+          fontWeight: 600,
+          fontSize: '14px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        知识训练
+      </button>
       <MainPage
         userId={userInfo.userId}
         phone={userInfo.phone}
@@ -168,6 +208,15 @@ function App() {
           <OrderTest />
         </div>
       </div>
+
+      {/* 商家知识库训练页面 */}
+      {showMerchantTraining && (
+        <MerchantTraining
+          storeId={trainingStoreId}
+          storeName={trainingStoreName}
+          onBack={() => setShowMerchantTraining(false)}
+        />
+      )}
 
       <style>{`
         @keyframes fadeIn {
