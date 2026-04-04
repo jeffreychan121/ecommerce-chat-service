@@ -13,6 +13,46 @@ const api = axios.create({
   timeout: 30000,
 });
 
+// ===== 登录相关 =====
+export interface LoginResponse {
+  userId: string;
+  phone: string;
+}
+
+// 手机号登录
+export async function login(phone: string): Promise<LoginResponse> {
+  const response = await api.post<LoginResponse>('/api/auth/login', { phone });
+  return response.data;
+}
+
+// ===== 店铺相关 =====
+export interface Store {
+  id: string;
+  name: string;
+  storeType: 'SELF' | 'MERCHANT';
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 获取店铺列表
+export async function getStores(): Promise<Store[]> {
+  const response = await api.get<Store[]>('/api/stores');
+  return response.data;
+}
+
+// 创建店铺
+export async function createStore(name: string, storeType: 'SELF' | 'MERCHANT'): Promise<Store> {
+  const response = await api.post<Store>('/api/stores', { name, storeType });
+  return response.data;
+}
+
+// 删除店铺
+export async function deleteStore(id: string): Promise<void> {
+  await api.delete(`/api/stores/${id}`);
+}
+
+// ===== 会话相关 =====
+
 // 创建或恢复会话
 export async function createSession(data: CreateSessionRequest): Promise<CreateSessionResponse> {
   const response = await api.post<CreateSessionResponse>('/api/chat/sessions', data);
@@ -41,6 +81,70 @@ export async function handoff(sessionId: string): Promise<HandoffResponse> {
 export async function getMessages(sessionId: string, limit = 50, offset = 0) {
   const response = await api.get(`/api/chat/sessions/${sessionId}/messages`, {
     params: { limit, offset },
+  });
+  return response.data;
+}
+
+// 更新会话状态
+export async function updateSessionStatus(sessionId: string, status: 'OPEN' | 'HANDOFF' | 'CLOSED') {
+  const response = await api.patch(`/api/chat/sessions/${sessionId}/status`, { status });
+  return response.data;
+}
+
+// ===== 订单相关 =====
+
+export interface OrderItem {
+  skuId: string;
+  title: string;
+  quantity: number;
+  price: number;
+  image?: string;
+}
+
+export interface OrderInfo {
+  orderNo: string;
+  status: string;
+  statusText: string;
+  payStatus: string;
+  orderAmount: number;
+  discountAmount: number;
+  actualAmount: number;
+  createdAt: string;
+  paidAt?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+  estimatedShipTime?: string;
+  estimatedDeliveryTime?: string;
+  items: OrderItem[];
+  shippingAddress?: string;
+  receiverName?: string;
+  receiverPhone?: string;
+}
+
+export interface CreateOrderRequest {
+  phone: string;
+  items: Array<{ skuId: string; quantity: number }>;
+  shippingAddress: string;
+  receiverName: string;
+  receiverPhone: string;
+}
+
+// 创建订单
+export async function createOrder(data: CreateOrderRequest): Promise<OrderInfo> {
+  const response = await api.post<OrderInfo>('/api/orders', data);
+  return response.data;
+}
+
+// 查询订单
+export async function getOrder(orderNo: string): Promise<OrderInfo> {
+  const response = await api.get<OrderInfo>(`/api/orders/${orderNo}`);
+  return response.data;
+}
+
+// 获取订单列表
+export async function getOrders(limit: number = 20): Promise<OrderInfo[]> {
+  const response = await api.get<OrderInfo[]>('/api/orders', {
+    params: { limit },
   });
   return response.data;
 }
