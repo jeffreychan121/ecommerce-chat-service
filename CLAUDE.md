@@ -10,12 +10,16 @@ Mall Chat Service 是一个基于 NestJS 的商城智能客服系统，集成 Di
 
 ### 一键启动（开发模式）
 ```bash
-# 同时启动后端 + 前端
+# 方式1: 使用 && 串行启动（先启动后端再启动前端）
 pnpm run start:dev & cd frontend && pnpm run dev
 
-# 或者分两步执行：
+# 方式2: 两个终端分别执行：
 # 终端1: pnpm run start:dev      # 后端 http://localhost:3000
 # 终端2: cd frontend && pnpm run dev  # 前端 http://localhost:5173
+
+# 方式3: 后台运行（推荐）
+pnpm run start:dev &
+(cd frontend && pnpm run dev &)
 ```
 
 ### 后端 (NestJS)
