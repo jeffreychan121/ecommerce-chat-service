@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react';
-import { createSession, sendMessage, handoff } from '../services/api';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { createSession, sendMessage, handoff, getMessages, updateSessionStatus } from '../services/api';
 import type { CreateSessionRequest, SendMessageRequest } from '../types';
 
 interface ChatMessage {
@@ -22,7 +22,8 @@ export interface UseChatReturn {
   sendUserMessage: (content: string) => Promise<void>;
   requestHandoff: () => Promise<void>;
   returnToAI: () => void;
-  initSession: () => Promise<void>;
+  initSession: (config?: Partial<CreateSessionRequest>) => Promise<void>;
+  resetSession: () => void;
 }
 
 export function useChat(options: UseChatOptions): UseChatReturn {
@@ -34,26 +35,56 @@ export function useChat(options: UseChatOptions): UseChatReturn {
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const configRef = useRef(initialConfig);
-  configRef.current = initialConfig;
+  // 保持 configRef 始终最新
+  useEffect(() => {
+    configRef.current = initialConfig;
+  }, [initialConfig]);
 
   // 初始化会话
-  const initSession = useCallback(async () => {
+  const initSession = useCallback(async (overrideConfig?: Partial<CreateSessionRequest>) => {
     setIsLoading(true);
     try {
-      const response = await createSession({
-        phone: configRef.current.phone,
-        storeId: configRef.current.storeId,
-        storeType: configRef.current.storeType,
-        channel: configRef.current.channel,
-      });
+      const requestData = {
+        phone: overrideConfig?.phone || configRef.current.phone,
+        storeId: overrideConfig?.storeId || configRef.current.storeId,
+        storeType: overrideConfig?.storeType || configRef.current.storeType,
+        channel: overrideConfig?.channel || configRef.current.channel,
+      };
+      console.log('initSession request:', requestData);
+
+      const response = await createSession(requestData);
+      console.log('initSession response:', response);
 
       setSessionId(response.sessionId);
       setIsHandoff(response.status === 'HANDOFF');
 
-      // 添加欢迎消息
+      // 如果是恢复旧会话，加载历史消息
+      if (!response.isNew) {
+        try {
+          const historyMsgs = await getMessages(response.sessionId);
+          console.log('History messages:', historyMsgs);
+          if (historyMsgs && historyMsgs.length > 0) {
+            const historicalMessages: ChatMessage[] = historyMsgs.map((msg: any) => ({
+              type: msg.senderType,
+              content: msg.content,
+              position: msg.senderType === 'USER' ? 'right' : 'left',
+              timestamp: new Date(msg.createdAt).getTime(),
+            }));
+            console.log('Mapped messages:', historicalMessages);
+            setMessages(historicalMessages);
+            return;
+          }
+        } catch (e) {
+          console.warn('Failed to load history messages:', e);
+        }
+      }
+
+      // 新会话添加欢迎消息
       const welcomeMessage: ChatMessage = {
         type: 'text',
-        content: '您好！请问有什么可以帮您？',
+        content: response.isNew
+          ? '您好！请问有什么可以帮您？'
+          : '欢迎回来！已恢复之前的对话',
         position: 'left',
         timestamp: Date.now(),
       };
@@ -74,7 +105,12 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 
   // 发送用户消息
   const sendUserMessage = useCallback(async (content: string) => {
-    if (!sessionId || isHandoff) return;
+    console.log('sendUserMessage called:', { sessionId, isHandoff, content });
+
+    if (!sessionId) {
+      console.error('No sessionId!');
+      return;
+    }
 
     // 添加用户消息
     const userMessage: ChatMessage = {
@@ -85,6 +121,13 @@ export function useChat(options: UseChatOptions): UseChatReturn {
     };
     setMessages((prev) => [...prev, userMessage]);
 
+    // 如果是转人工状态，只发送消息不调用AI
+    if (isHandoff) {
+      // TODO: 发送消息给人工客服API
+      console.log('发送消息给人工客服:', content);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -93,7 +136,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
         inputs: {
           phone: configRef.current.phone,
           store_id: configRef.current.storeId,
-          store_type: configRef.current.storeType,
+          store_type: configRef.current.storeType.toLowerCase() as 'self' | 'merchant',
           channel: configRef.current.channel,
         },
       };
@@ -118,12 +161,14 @@ export function useChat(options: UseChatOptions): UseChatReturn {
           onHandoff(response.queueNo);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send message:', error);
+      console.error('Error response:', error.response?.data);
+
       const errorMessage: ChatMessage = {
         type: 'text',
-        content: '发送消息失败，请稍后重试',
-        position: 'left',
+        content: error.response?.data?.message || '发送消息失败，请稍后重试',
+        position: 'center',
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -160,7 +205,16 @@ export function useChat(options: UseChatOptions): UseChatReturn {
   }, [sessionId, onHandoff]);
 
   // 返回智能客服
-  const returnToAI = useCallback(() => {
+  const returnToAI = useCallback(async () => {
+    if (sessionId) {
+      try {
+        // 调用后端 API 更新会话状态为 OPEN
+        await updateSessionStatus(sessionId, 'OPEN');
+        console.log('会话状态已更新为 OPEN');
+      } catch (error) {
+        console.error('更新会话状态失败:', error);
+      }
+    }
     setIsHandoff(false);
     const returnMessage: ChatMessage = {
       type: 'text',
@@ -169,6 +223,13 @@ export function useChat(options: UseChatOptions): UseChatReturn {
       timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, returnMessage]);
+  }, [sessionId]);
+
+  // 重置会话（用于切换用户/店铺时）
+  const resetSession = useCallback(() => {
+    setMessages([]);
+    setIsHandoff(false);
+    setSessionId(null);
   }, []);
 
   return {
@@ -180,6 +241,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
     requestHandoff,
     returnToAI,
     initSession,
+    resetSession,
   };
 }
 
