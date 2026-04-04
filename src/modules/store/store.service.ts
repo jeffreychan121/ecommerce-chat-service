@@ -63,7 +63,19 @@ export class StoreService {
     if (!store) {
       throw new NotFoundException('店铺不存在');
     }
-    // 删除所有关联的会话（Messages 和 HandoffTickets 会级联删除）
+    // 获取所有关联的会话 ID
+    const sessions = await this.prisma.chatSession.findMany({
+      where: { storeId: id },
+      select: { id: true },
+    });
+    const sessionIds = sessions.map(s => s.id);
+    // 先删除关联的转人工工单
+    if (sessionIds.length > 0) {
+      await this.prisma.handoffTicket.deleteMany({
+        where: { sessionId: { in: sessionIds } },
+      });
+    }
+    // 删除所有关联的会话（Messages 会级联删除）
     await this.prisma.chatSession.deleteMany({ where: { storeId: id } });
     // 删除店铺
     await this.prisma.store.delete({ where: { id } });
