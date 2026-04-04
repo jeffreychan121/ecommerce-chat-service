@@ -192,6 +192,32 @@ src/modules/merchant/
 
 ## 待定事项
 
-1. 文件大小限制？
-2. 训练超时时间？
-3. 是否需要训练历史记录？
+1. **文件大小限制**：10MB
+2. **训练超时时间**：5 分钟
+3. **训练历史记录**：需要记录每次训练的时间、状态、成功/失败
+
+---
+
+## 补充设计：训练历史记录
+
+### 数据库表
+
+```prisma
+model TrainingJob {
+  id            String    @id @default(uuid())
+  storeId       String
+  fileId        String
+  fileName      String
+  status        TrainingStatus
+  errorMessage  String?   // 失败时记录错误信息
+  createdAt     DateTime  @default(now())
+  completedAt  DateTime?   // 完成时间
+}
+
+enum TrainingStatus {
+  PENDING     // 待处理
+  PROCESSING  // 训练中
+  COMPLETED  // 已完成
+  FAILED     // 失败
+}
+```
