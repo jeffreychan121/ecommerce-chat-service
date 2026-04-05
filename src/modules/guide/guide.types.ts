@@ -63,12 +63,13 @@ export interface CheckPromoResponse {
 
 // 留资请求
 export interface CreateLeadRequest {
-  user_id: string;
-  store_id: string;
-  sku_id: string;
+  userPhone: string;
+  storeId: string;
+  skuId: string;
+  skuName: string;
+  quantity?: number;
+  price: number;
   intent: 'buy' | 'consult' | 'compare';
-  phone: string;
-  remark?: string;
 }
 
 // 留资响应

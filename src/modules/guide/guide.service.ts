@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../../infra/database/prisma.service';
 import {
   SearchProductsRequest,
   SearchProductsResponse,
@@ -10,6 +11,7 @@ import {
   CreateLeadRequest,
   CreateLeadResponse,
 } from './guide.types';
+import { Lead, LeadIntent, LeadStatus, Prisma } from '@prisma/client';
 
 // Mock 商品数据
 const MOCK_PRODUCTS: ProductItem[] = [
@@ -53,6 +55,8 @@ const MOCK_PRODUCTS: ProductItem[] = [
 @Injectable()
 export class GuideService {
   private readonly logger = new Logger(GuideService.name);
+
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * 商品搜索
@@ -141,15 +145,73 @@ export class GuideService {
   async createLead(req: CreateLeadRequest): Promise<CreateLeadResponse> {
     this.logger.log(`[GuideService] 创建留资: ${JSON.stringify(req)}`);
 
-    // Mock: 生成留资ID
-    const lead_id = `LEAD_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // 查找或创建用户
+    let user = await this.prisma.user.findUnique({
+      where: { phone: req.userPhone },
+    });
 
-    this.logger.log(`[GuideService] 留资创建成功: ${lead_id}`);
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: { phone: req.userPhone },
+      });
+    }
+
+    // 创建留资记录
+    const lead = await this.prisma.lead.create({
+      data: {
+        userId: user.id,
+        storeId: req.storeId,
+        skuId: req.skuId,
+        skuName: req.skuName,
+        quantity: req.quantity || 1,
+        price: req.price,
+        intent: req.intent as LeadIntent,
+        userPhone: req.userPhone,
+        status: LeadStatus.PENDING,
+      },
+    });
+
+    this.logger.log(`[GuideService] 留资创建成功: ${lead.id}`);
 
     return {
       success: true,
-      lead_id,
+      lead_id: lead.id,
       message: '感谢您的咨询，客服将尽快与您联系',
     };
+  }
+
+  /**
+   * 获取留资列表
+   */
+  async getLeads(storeId?: string): Promise<Lead[]> {
+    this.logger.log(`[GuideService] 获取留资列表, storeId: ${storeId}`);
+
+    const where: Prisma.LeadWhereInput = {};
+    if (storeId) {
+      where.storeId = storeId;
+    }
+
+    return this.prisma.lead.findMany({
+      where,
+      include: {
+        user: true,
+        store: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * 更新留资状态
+   */
+  async updateLeadStatus(leadId: string, status: LeadStatus): Promise<Lead> {
+    this.logger.log(`[GuideService] 更新留资状态: ${leadId} -> ${status}`);
+
+    const lead = await this.prisma.lead.update({
+      where: { id: leadId },
+      data: { status },
+    });
+
+    return lead;
   }
 }

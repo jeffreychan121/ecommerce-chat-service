@@ -3,6 +3,9 @@ import LoginPage from './components/LoginPage';
 import MainPage from './components/MainPage';
 import OrderTest from './components/OrderTest';
 import MerchantTraining from './components/MerchantTraining';
+import AgentDashboard from './pages/AgentDashboard';
+import AgentChat from './pages/AgentChat';
+import LeadManagement from './components/LeadManagement';
 
 interface UserInfo {
   userId: string;
@@ -16,8 +19,9 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [showOrderTest, setShowOrderTest] = useState(false);
   const [showMerchantTraining, setShowMerchantTraining] = useState(false);
-  const [trainingStoreId, setTrainingStoreId] = useState('');
-  const [trainingStoreName, setTrainingStoreName] = useState('');
+  const [showAgentDashboard, setShowAgentDashboard] = useState(false);
+  const [showLeadManagement, setShowLeadManagement] = useState(false);
+  const [agentSessionId, setAgentSessionId] = useState<string | null>(null);
 
   // 检查 localStorage 中是否有登录信息
   useEffect(() => {
@@ -25,6 +29,14 @@ function App() {
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);
+        // 如果没有 storeId，说明是旧缓存，需要清除并重新登录
+        if (!user.storeId) {
+          console.log('[App] 旧缓存无storeId，清除并重新登录');
+          localStorage.removeItem('chat_user');
+          setLoading(false);
+          return;
+        }
+        console.log('[App] 从localStorage恢复:', user);
         setUserInfo(user);
       } catch (e) {
         localStorage.removeItem('chat_user');
@@ -33,8 +45,8 @@ function App() {
     setLoading(false);
   }, []);
 
-  const handleLogin = (userId: string, phone: string) => {
-    setUserInfo({ userId, phone });
+  const handleLogin = (userId: string, phone: string, storeId?: string, storeName?: string) => {
+    setUserInfo({ userId, phone, storeId, storeName });
   };
 
   const handleLogout = () => {
@@ -100,8 +112,38 @@ function App() {
       </button>
       <button
         onClick={() => {
-          setTrainingStoreId(userInfo.storeId || '');
-          setTrainingStoreName(userInfo.storeName || '商家知识库');
+          setShowAgentDashboard(true);
+        }}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '250px',
+          padding: '10px 20px',
+          background: 'rgba(255,255,255,0.2)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.3)',
+          borderRadius: '20px',
+          cursor: 'pointer',
+          zIndex: 1000,
+          color: '#fff',
+          fontWeight: 600,
+          fontSize: '14px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        客服工作台
+      </button>
+      <button
+        onClick={() => {
           setShowMerchantTraining(true);
         }}
         style={{
@@ -131,6 +173,38 @@ function App() {
         }}
       >
         知识训练
+      </button>
+      <button
+        onClick={() => {
+          setShowLeadManagement(true);
+        }}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '240px',
+          padding: '10px 20px',
+          background: 'rgba(255,255,255,0.2)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.3)',
+          borderRadius: '20px',
+          cursor: 'pointer',
+          zIndex: 1000,
+          color: '#fff',
+          fontWeight: 600,
+          fontSize: '14px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        留资管理
       </button>
       <MainPage
         userId={userInfo.userId}
@@ -210,11 +284,35 @@ function App() {
       </div>
 
       {/* 商家知识库训练页面 */}
-      {showMerchantTraining && (
+      {showMerchantTraining && userInfo && (
         <MerchantTraining
-          storeId={trainingStoreId}
-          storeName={trainingStoreName}
+          storeId={userInfo.storeId || ''}
+          storeName={userInfo.storeName || '商家知识库'}
           onBack={() => setShowMerchantTraining(false)}
+        />
+      )}
+
+      {/* 留资管理页面 */}
+      {showLeadManagement && userInfo && (
+        <LeadManagement
+          storeId={userInfo.storeId}
+          onBack={() => setShowLeadManagement(false)}
+        />
+      )}
+
+      {/* 客服工作台首页 - 队列列表 */}
+      {showAgentDashboard && !agentSessionId && (
+        <AgentDashboard
+          onSelectSession={(sessionId) => setAgentSessionId(sessionId)}
+          onBack={() => setShowAgentDashboard(false)}
+        />
+      )}
+
+      {/* 客服聊天页面 */}
+      {showAgentDashboard && agentSessionId && (
+        <AgentChat
+          sessionId={agentSessionId}
+          onBack={() => setAgentSessionId(null)}
         />
       )}
 

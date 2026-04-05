@@ -1,22 +1,25 @@
-import { IsString, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsNumber } from 'class-validator';
 
 export class CreateLeadDto {
   @IsString()
-  user_id: string;
+  userPhone: string;
 
   @IsString()
-  store_id: string;
+  storeId: string;
 
   @IsString()
-  sku_id: string;
+  skuId: string;
+
+  @IsString()
+  skuName: string;
+
+  @IsOptional()
+  @IsNumber()
+  quantity?: number;
+
+  @IsNumber()
+  price: number;
 
   @IsEnum(['buy', 'consult', 'compare'])
   intent: 'buy' | 'consult' | 'compare';
-
-  @IsString()
-  phone: string;
-
-  @IsOptional()
-  @IsString()
-  remark?: string;
 }

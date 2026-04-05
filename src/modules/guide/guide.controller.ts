@@ -1,7 +1,11 @@
 import {
   Controller,
   Post,
+  Get,
+  Patch,
   Body,
+  Param,
+  Query,
   HttpCode,
   HttpStatus,
   Logger,
@@ -57,5 +61,28 @@ export class GuideController {
   async createLead(@Body() dto: CreateLeadDto) {
     this.logger.log(`[GuideController] create-lead: ${JSON.stringify(dto)}`);
     return this.guideService.createLead(dto);
+  }
+
+  /**
+   * 获取留资列表
+   */
+  @Get('leads')
+  @HttpCode(HttpStatus.OK)
+  async getLeads(@Query('storeId') storeId?: string) {
+    this.logger.log(`[GuideController] getLeads: storeId=${storeId}`);
+    return this.guideService.getLeads(storeId);
+  }
+
+  /**
+   * 更新留资状态
+   */
+  @Patch('leads/:id/status')
+  @HttpCode(HttpStatus.OK)
+  async updateLeadStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
+    this.logger.log(`[GuideController] updateLeadStatus: ${id} -> ${status}`);
+    return this.guideService.updateLeadStatus(id, status as any);
   }
 }
