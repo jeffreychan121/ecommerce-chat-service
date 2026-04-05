@@ -30,6 +30,7 @@ interface ChatMessage {
 export interface UseChatOptions {
   initialConfig: CreateSessionRequest;
   onHandoff?: (queueNo: number) => void;
+  onOrderCreated?: (data: any) => void;
 }
 
 export interface UseChatReturn {
@@ -53,10 +54,16 @@ export function useChat(options: UseChatOptions): UseChatReturn {
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const configRef = useRef(initialConfig);
+  const optionsRef = useRef(options);
   // 保持 configRef 始终最新
   useEffect(() => {
     configRef.current = initialConfig;
   }, [initialConfig]);
+
+  // 保持 optionsRef 始终最新
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   // WebSocket 连接
   const socketRef = useRef<Socket | null>(null);
@@ -82,6 +89,14 @@ export function useChat(options: UseChatOptions): UseChatReturn {
           timestamp: Date.now(),
         };
         setMessages((prev) => [...prev, agentMessage]);
+      });
+
+      // 监听订单创建事件
+      socketRef.current.on('order-created', (data: any) => {
+        console.log('[useChat] 收到订单创建事件:', data);
+        if (optionsRef.current.onOrderCreated) {
+          optionsRef.current.onOrderCreated(data);
+        }
       });
 
       return () => {
