@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { MessageBubble } from '../components/MessageBubble';
 
 interface Message {
   id: string;
@@ -101,23 +102,6 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
     } catch (e) {
       console.error('Failed to close session:', e);
     }
-  };
-
-  const getSenderLabel = (type: string) => {
-    if (type === 'USER') return '客户';
-    if (type === 'AI') return 'AI';
-    if (type === 'HUMAN') return '我';
-    return type;
-  };
-
-  const getSenderStyle = (type: string): React.CSSProperties => {
-    const isLeft = type === 'USER';
-    return {
-      background: isLeft ? 'rgba(24, 144, 255, 0.15)' : type === 'HUMAN' ? 'rgba(82, 196, 26, 0.15)' : 'rgba(139, 92, 246, 0.15)',
-      border: isLeft ? '1px solid rgba(24, 144, 255, 0.3)' : type === 'HUMAN' ? '1px solid rgba(82, 196, 26, 0.3)' : '1px solid rgba(139, 92, 246, 0.3)',
-      marginLeft: isLeft ? '0' : 'auto',
-      marginRight: isLeft ? 'auto' : '0',
-    };
   };
 
   return (
@@ -245,23 +229,17 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
                   animation: `fadeIn 0.3s ease ${index * 0.05}s both`,
                 }}
               >
-                <div style={{
-                  ...getSenderStyle(msg.senderType),
-                  padding: '14px 18px',
-                  borderRadius: '16px',
-                  maxWidth: '75%',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                }}>
-                  <div style={{
-                    fontSize: '12px',
-                    color: msg.senderType === 'USER' ? '#1890ff' : msg.senderType === 'HUMAN' ? '#52c41a' : '#999',
-                    marginBottom: '6px',
-                    fontWeight: 500,
-                  }}>
-                    {getSenderLabel(msg.senderType)}
-                  </div>
-                  <div style={{ lineHeight: '1.6', color: '#fff' }}>{msg.content}</div>
-                </div>
+                <MessageBubble
+                  message={{
+                    id: msg.id,
+                    content: msg.content,
+                    type: 'text',
+                    senderType: msg.senderType === 'USER' ? 'user' : msg.senderType === 'HUMAN' ? 'human' : 'ai',
+                    position: msg.senderType === 'USER' ? 'right' : 'left',
+                    timestamp: msg.createdAt ? new Date(msg.createdAt).getTime() : undefined,
+                  }}
+                  userPhone={userPhone}
+                />
               </div>
             ))
           )}
