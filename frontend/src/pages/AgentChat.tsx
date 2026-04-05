@@ -232,8 +232,8 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
                 <MessageBubble
                   message={{
                     id: msg.id,
-                    content: msg.content,
                     type: 'text',
+                    content: msg.content,
                     senderType: msg.senderType === 'USER' ? 'user' : msg.senderType === 'HUMAN' ? 'human' : 'ai',
                     position: msg.senderType === 'USER' ? 'right' : 'left',
                     timestamp: msg.createdAt ? new Date(msg.createdAt).getTime() : undefined,
