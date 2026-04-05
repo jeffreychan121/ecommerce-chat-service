@@ -1,179 +1,201 @@
 # Dify Chatflow 导购功能配置 SOP
 
-## 一、现有 Chatflow 分析
-
-你的 `商城智能客服PRO` 已有的流程：
+## 一、整体流程
 
 ```
-用户输入 (store_type)
+用户: "推荐个2000块的电子产品给我"
     ↓
-Question Classifier → 分类: 商品知识 / 订单物流 / 其他
+Dify 理解意图 + 提取参数
     ↓
-IF/ELSE (判断store_type) → 自营知识库 / 第三方知识库
+HTTP Request 调用商品搜索 API
     ↓
-知识库检索 → LLM生成回答 → 直接回复
+LLM 生成回复（含商品JSON + 追问话术）
+    ↓
+前端解析 JSON 渲染商品卡片
 ```
 
-**现有 HTTP Request 节点**:
-- 订单查询: `POST http://host.docker.internal:3000/api/agent`
-- 物流查询: `POST http://host.docker.internal:3000/api/agent`
+## 二、后端接口
 
-## 二、添加导购流程步骤
+### 1. 商品搜索
+- **URL**: `POST /api/guide/search-products`
+- **参数**:
+```json
+{
+  "query": "电子产品",
+  "budget_min": 1000,
+  "budget_max": 2000
+}
+```
+- **响应**:
+```json
+{
+  "items": [
+    {
+      "sku_id": "SKU001",
+      "name": "iPhone 15 Pro Max 256GB",
+      "price": 9999,
+      "detail_url": "/product/SKU001",
+      "short_reason": "最新旗舰机型，A17 Pro芯片"
+    }
+  ]
+}
+```
 
-### 步骤 1: 修改 Question Classifier
+### 2. 留资
+- **URL**: `POST /api/guide/create-lead`
+- **参数**:
+```json
+{
+  "userPhone": "13800138000",
+  "storeId": "xxx",
+  "skuId": "SKU001",
+  "skuName": "iPhone 15",
+  "price": 9999,
+  "quantity": 1,
+  "intent": "buy"
+}
+```
 
-在 Dify 编辑器中找到 `Question Classifier` 节点，添加新分类：
+## 三、Dify Chatflow 配置
 
-- **分类名称**: 商品推荐
-- **分类条件**: 当用户询问商品、购买、推荐、多少钱、有什么产品等
-- **输出值**: `product_recommend`
+### 第一步：添加商品搜索 HTTP Request
 
-### 步骤 2: 添加商品搜索 HTTP Request
-
-在分类后的分支添加新节点：
-
-1. **添加 HTTP Request 节点**
+1. 在 Chatflow 中添加 **HTTP Request** 节点
+2. 配置：
    - **名称**: 商品搜索
-   - **URL**: `http://host.docker.internal:3000/api/guide/search-products`
+   - **URL**: `{{base_url}}/api/guide/search-products`
    - **Method**: POST
    - **Headers**: `Content-Type: application/json`
    - **Body**:
    ```json
    {
-     "store_id": "{{inputs.store_id}}",
-     "store_type": "{{inputs.store_type}}",
-     "query": "{{sys.query}}"
+     "query": "{{query}}",
+     "budget_min": {{budget_min}},
+     "budget_max": {{budget_max}}
    }
    ```
 
-2. **输入变量** (在 Start 节点添加):
-   - `store_id`: 店铺ID (string)
-   - `store_type`: self 或 merchant
+### 第二步：参数提取（可选）
 
-### 步骤 3: 添加推荐结果格式化 LLM
+如果用户消息中有预算、类别等信息，添加 **参数提取** 节点：
 
-1. **添加 LLM 节点**
-   - **名称**: 推荐结果处理
-   - **Prompt**:
-   ```
-   你是商城智能客服助手。
+- 从用户消息中提取：
+  - `query`: 搜索关键词
+  - `budget_min`: 最低预算（如"1000块" → 1000）
+  - `budget_max`: 最高预算（如"2000块" → 2000）
 
-   用户询问：{{sys.query}}
+### 第三步：LLM 生成回复
 
-   商品搜索结果：
-   {{商品搜索节点.response.body}}
-
-   请根据搜索结果，为用户生成友好的推荐回复，包括：
-   1. 商品名称
-   2. 价格
-   3. 推荐理由
-   4. 如有多个商品，可推荐1-3个
-
-   如果没有搜索结果，回复"抱歉，未找到相关商品"。
-   ```
-
-### 步骤 4: (可选) 添加留资功能
-
-当用户明确表达购买意向时，调用留资接口：
-
-1. **添加条件判断** (If-Else)
-   - 判断用户是否说"我要买"、"下单"、"购买"等
-
-2. **添加 HTTP Request 节点**
-   - **URL**: `http://host.docker.internal:3000/api/guide/create-lead`
-   - **Body**:
-   ```json
-   {
-     "user_id": "{{inputs.customer_id}}",
-     "store_id": "{{inputs.store_id}}",
-     "sku_id": "{{选择的商品SKU}}",
-     "intent": "buy",
-     "phone": "{{inputs.phone}}"
-   }
-   ```
-
-3. **回复留资成功消息**
-
-## 三、完整流程图
+添加 **LLM** 节点，**提示词**：
 
 ```
-用户输入
-    ↓
-Question Classifier
-    ├─ 商品推荐 → 商品搜索 → 推荐结果处理 → 直接回复
-    ├─ 订单/物流 → (现有流程)
-    └─ 知识问答 → (现有流程)
+你是一个热情的商城导购客服。用户说：{{#start.text#}}
+
+已根据搜索找到以下商品：
+{{#商品搜索.results#}}
+
+请按以下要求回复：
+
+1. 先用亲切自然的语言介绍推荐商品（1-3款）
+2. 说明商品亮点和价格
+3. 强调优势，引导下单
+
+4. 【非常重要】在回复末尾添加追问话术，根据商品类别选择：
+
+【零食/食品类】
+"有特别想吃的口味吗？比如酸辣的、酥脆的，还是甜口的？我可以帮你再细挑。"
+
+【电子产品】
+"您是更关注性能还是性价比呢？我可以帮您推荐更适合的款式。"
+
+【服装/配饰】
+"您平时穿衣风格是偏休闲还是正式？我可以给您更好的建议。"
+
+【美妆护肤】
+"您更关注补水保湿还是抗老美白呢？我可以根据您的肤质推荐。"
+
+【家居用品】
+"您对材质或设计有特别偏好吗？比如简约风格或复古风格？"
+
+【其他】
+"您还有其他特别的要求吗？比如品牌、颜色、尺寸等？"
+
+5. 【最重要】在回复中嵌入以下JSON格式的商品信息（供前端展示卡片）：
+{"type":"products","items":[
+  {"sku_id":"商品ID","name":"商品名称","price":价格,"detail_url":"链接","short_reason":"简介"}
+]}
+
+注意：JSON必须完整包含在回复中，但不要说明这是JSON
 ```
 
-## 四、Dify 变量对应关系
+### 第四步：连接节点
 
-| Dify 变量 | 后端字段 | 说明 |
-|-----------|----------|------|
-| `inputs.store_id` | store_id | 店铺ID |
-| `inputs.store_type` | store_type | self/merchant |
-| `inputs.phone` | phone | 用户手机号 |
-| `inputs.customer_id` | customer_id | 客户ID |
-| `sys.query` | query | 用户问题 |
-| `{{http节点.body}}` | response | HTTP响应 |
-
-## 五、测试验证
-
-### 本地测试 API
-
-```bash
-# 商品搜索
-curl -X POST http://localhost:3000/api/guide/search-products \
-  -H "Content-Type: application/json" \
-  -d '{"store_id":"store_001","store_type":"self","query":"iPhone"}'
-
-# 留资创建
-curl -X POST http://localhost:3000/api/guide/create-lead \
-  -H "Content-Type: application/json" \
-  -d '{"user_id":"user_001","store_id":"store_001","sku_id":"SKU001","intent":"buy","phone":"13800138000"}'
+```
+开始 → 参数提取(可选) → 商品搜索 → LLM生成回复 → 结束
 ```
 
-### Dify 测试
+## 四、商品 JSON 格式
 
-在 Dify 的"预览"功能中测试：
-1. 输入: "我想买 iPhone"
-2. 观察商品搜索节点是否正确调用
-3. 观察返回结果是否正确显示
+前端会解析回复中的 JSON 格式：
 
-## 六、注意事项
-
-1. **URL 适配**: 如果 Dify 和后端不在同一机器，将 `host.docker.internal` 改为实际后端地址
-
-2. **输入变量**: 确保在 Start 节点配置以下输入变量：
-   - `store_id` (string, 必填)
-   - `store_type` (select: self/merchant, 必填)
-   - `phone` (string, 可选)
-   - `customer_id` (string, 可选)
-
-3. **错误处理**: HTTP 请求节点可配置重试次数，建议开启重试
-
-4. **日志查看**: 后端日志路径 `/tmp/backend.log`，查看请求是否到达
-
-## 七、现有 Dify 配置参考
-
-```yaml
-# 你的 Start 节点已有变量
-start:
-  variables:
-    - store_type: self/merchant (select)
-
-# Question Classifier 已有分类
-- 1: 商品知识/平台规则/支付方式
-- 2: 订单状态/物流信息
-- other: 其他
+```json
+{
+  "type": "products",
+  "items": [
+    {
+      "sku_id": "SKU001",
+      "name": "iPhone 15 Pro Max 256GB",
+      "price": 9999,
+      "detail_url": "/product/SKU001",
+      "short_reason": "最新旗舰机型，A17 Pro芯片，钛金属设计"
+    },
+    {
+      "sku_id": "SKU002",
+      "name": "AirPods Pro 第二代",
+      "price": 1899,
+      "detail_url": "/product/SKU002",
+      "short_reason": "主动降噪，空间音频"
+    }
+  ]
+}
 ```
 
-## 八、常见问题
+## 五、追问话术对照表
 
-**Q: HTTP 请求返回 404?**
-A: 检查 URL 是否正确，当前后端地址是 `http://localhost:3000`
+| 商品类别 | 追问话术 |
+|---------|---------|
+| 零食/食品 | "有特别想吃的口味吗？比如酸辣的、酥脆的，还是甜口的？我可以帮你再细挑。" |
+| 电子产品 | "您是更关注性能还是性价比呢？我可以帮您推荐更适合的款式。" |
+| 服装/配饰 | "您平时穿衣风格是偏休闲还是正式？我可以给您更好的建议。" |
+| 美妆护肤 | "您更关注补水保湿还是抗老美白呢？我可以根据您的肤质推荐。" |
+| 家居用品 | "您对材质或设计有特别偏好吗？比如简约风格或复古风格？" |
+| 其他 | "您还有其他特别的要求吗？比如品牌、颜色、尺寸等？" |
 
-**Q: 商品搜索结果为空?**
-A: 检查 store_id 和 query 是否正确传递
+## 六、测试
 
-**Q: 如何判断用户购买意向?**
-A: 可使用 If-Else 节点判断用户消息中是否包含"买"、"下单"等关键词
+在 Dify 预览中测试：
+
+1. **输入**: "推荐个2000块的电子产品给我"
+2. **期望返回**:
+   - 商品介绍文字
+   - 对应类别的追问话术
+   - JSON 格式的商品数据
+
+3. **输入**: "给我推荐些零食"
+4. **期望返回**:
+   - 零食商品列表
+   - 零食类追问话术："有特别想吃的口味吗？..."
+
+## 七、常见问题
+
+**Q: HTTP Request 返回 404?**
+A: 检查 URL 是否正确，替换 `{{base_url}}` 为实际后端地址
+
+**Q: 参数提取不到预算?**
+A: 可以让用户明确说"预算2000"，或在提示词中让 LLM 理解"2000块"就是预算
+
+**Q: 前端不显示卡片?**
+A: 检查 JSON 格式是否正确嵌入在回复中
+
+**Q: 如何判断商品类别?**
+A: 在 LLM 提示词中根据商品名称自动判断，或在 search-products API 返回时标注类别
