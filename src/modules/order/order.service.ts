@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../infra/database/prisma.service';
 import {
   OrderInfo,
@@ -11,14 +12,17 @@ import {
 export class OrderService {
   private readonly logger = new Logger(OrderService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   /**
    * 创建订单
    */
   async createOrder(params: {
     phone: string;
-    items: Array<{ skuId: string; quantity: number }>;
+    items: Array<{ skuId: string; quantity: number; productName?: string; price?: number }>;
     shippingAddress: string;
     receiverName: string;
     receiverPhone: string;
@@ -28,11 +32,11 @@ export class OrderService {
     // 生成订单号
     const orderNo = this.generateOrderNo();
 
-    // 随机商品和价格
-    const productNames = ['iPhone 15 Pro Max', 'MacBook Pro M3', 'AirPods Pro', 'iPad Pro', 'Apple Watch'];
-    const productName = productNames[Math.floor(Math.random() * productNames.length)];
-    const productPrice = Math.floor(Math.random() * 5000) + 500; // 500-5500随机价格
-    const quantity = params.items[0]?.quantity || 1;
+    // 使用传入的商品信息，如果没有则使用随机值
+    const firstItem = params.items[0];
+    const productName = firstItem?.productName || ['iPhone 15 Pro Max', 'MacBook Pro M3', 'AirPods Pro', 'iPad Pro', 'Apple Watch'][Math.floor(Math.random() * 5)];
+    const productPrice = firstItem?.price || Math.floor(Math.random() * 5000) + 500;
+    const quantity = firstItem?.quantity || 1;
     const amount = productPrice * quantity;
 
     // 创建订单
@@ -58,6 +62,13 @@ export class OrderService {
     if (order.status === OrderStatus.PAID || order.status === OrderStatus.TO_BE_SHIPPED) {
       await this.createLogistics(order.id, order.orderNo);
     }
+
+    // 广播订单创建事件
+    this.eventEmitter.emit('order.created', {
+      phone: params.phone,
+      orderNo: order.orderNo,
+      amount: order.actualAmount,
+    });
 
     return await this.toOrderInfo(order);
   }
@@ -98,6 +109,13 @@ export class OrderService {
 
     // 自动创建物流信息
     await this.createLogistics(order.id, order.orderNo);
+
+    // 广播订单创建事件
+    this.eventEmitter.emit('order.created', {
+      phone: 'chat-user',
+      orderNo: order.orderNo,
+      amount: order.actualAmount,
+    });
 
     return await this.toOrderInfo(order);
   }
