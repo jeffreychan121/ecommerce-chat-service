@@ -70,6 +70,7 @@ model ChatMessage {
   content     String
   messageType MessageType @default(TEXT)
   rawPayload  Json?       // Dify 原始响应
+  card        Json?       // 商品卡片数据
   createdAt   DateTime   @default(now())
 }
 
