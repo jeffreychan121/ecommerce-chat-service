@@ -22,10 +22,21 @@ interface UploadedFile {
   path: string;
   size: number;
 }
-
 @Controller('api/merchant')
 export class MerchantController {
   constructor(private readonly merchantService: MerchantService) {}
+
+  // 获取店铺知识库状态
+  @Get('status/:storeId')
+  async getStatus(@Param('storeId') storeId: string) {
+    return this.merchantService.getStoreStatus(storeId);
+  }
+
+  // 创建知识库
+  @Post('dataset/:storeId')
+  async createDataset(@Param('storeId') storeId: string) {
+    return this.merchantService.createDatasetForStore(storeId);
+  }
 
   // 上传文件
   @Post('files/upload')

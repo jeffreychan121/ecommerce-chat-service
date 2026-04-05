@@ -19,9 +19,9 @@ let DifyService = DifyService_1 = class DifyService {
         this.logger = new common_1.Logger(DifyService_1.name);
     }
     async sendMessage(conversationId, dto, onChunk) {
-        this.logger.log(`Sending message to Dify. Conversation: ${conversationId || 'new'}, Query: ${dto.query}`);
+        this.logger.log(`>>> [DifyService] 发送消息到Dify. Conversation: ${conversationId || 'new'}, Query: ${dto.query}, Inputs: ${JSON.stringify(dto.inputs)}`);
         const defaultHandler = (chunk) => {
-            this.logger.debug(`Dify chunk: ${chunk.event}`);
+            this.logger.debug(`>>> [DifyService] Dify chunk: ${chunk.event}`);
         };
         try {
             const result = await this.difyClient.sendMessage(conversationId, dto.inputs || {}, dto.query, onChunk || defaultHandler);
@@ -35,6 +35,18 @@ let DifyService = DifyService_1 = class DifyService {
     }
     async sendMessageWithInputs(conversationId, query, inputs, onChunk) {
         return this.sendMessage(conversationId, { query, inputs }, onChunk);
+    }
+    async createDataset(name, description) {
+        return this.difyClient.createDataset(name, description);
+    }
+    async createDocument(datasetId, filePath) {
+        return this.difyClient.createDocument(datasetId, filePath);
+    }
+    async getDocuments(datasetId) {
+        return this.difyClient.getDocuments(datasetId);
+    }
+    async deleteDocument(datasetId, documentId) {
+        return this.difyClient.deleteDocument(datasetId, documentId);
     }
 };
 exports.DifyService = DifyService;

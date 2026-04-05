@@ -5,6 +5,8 @@ import {
   deleteTrainingFile,
   trainFile,
   chatWithKnowledge,
+  getStoreStatus,
+  createDataset,
 } from '../services/api';
 
 interface TrainingJob {
@@ -12,6 +14,14 @@ interface TrainingJob {
   fileName: string;
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
   createdAt: string;
+}
+
+interface StoreStatus {
+  storeId: string;
+  storeName: string;
+  hasDataset: boolean;
+  datasetId: string | null;
+  fileCount: number;
 }
 
 export const MerchantTraining: React.FC<{
@@ -24,10 +34,35 @@ export const MerchantTraining: React.FC<{
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'upload' | 'files' | 'chat'>('upload');
+  const [storeStatus, setStoreStatus] = useState<StoreStatus | null>(null);
 
   useEffect(() => {
-    loadFiles();
+    loadStatus();
   }, []);
+
+  const loadStatus = async () => {
+    try {
+      const res = await getStoreStatus(storeId);
+      setStoreStatus(res.data);
+      if (res.data.hasDataset) {
+        loadFiles();
+      }
+    } catch (e) {
+      console.error('获取状态失败:', e);
+    }
+  };
+
+  const handleCreateDataset = async () => {
+    setLoading(true);
+    try {
+      await createDataset(storeId);
+      await loadStatus();
+    } catch (e) {
+      console.error('创建知识库失败:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadFiles = async () => {
     try {
@@ -124,6 +159,23 @@ export const MerchantTraining: React.FC<{
           <h2>知识库训练</h2>
           <span className="store-name">{storeName}</span>
         </div>
+      </div>
+
+      {/* 知识库状态 */}
+      <div className="dataset-status">
+        {storeStatus?.hasDataset ? (
+          <>
+            <span className="status-badge ready">知识库已创建</span>
+            <span className="dataset-id">ID: {storeStatus.datasetId}</span>
+          </>
+        ) : (
+          <>
+            <span className="status-badge not-ready">尚未创建知识库</span>
+            <button className="create-btn" onClick={handleCreateDataset} disabled={loading}>
+              {loading ? '创建中...' : '创建知识库'}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Tab 切换 */}

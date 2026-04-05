@@ -21,7 +21,7 @@ export class SessionService {
     storeType: StoreType,
     channel: string,
   ): Promise<CreateOrResumeResult> {
-    // 1. 查找该用户在对应店铺的最近未关闭会话
+    // 1. 查找该用户在对应店铺的最近会话（包括 OPEN 和 HANDOFF）
     const existingSession = await this.prisma.chatSession.findFirst({
       where: {
         userId,
@@ -37,11 +37,20 @@ export class SessionService {
 
     // 2. 如有则返回（恢复），无则创建新会话
     if (existingSession) {
-      // 更新最后活跃时间
-      const updatedSession = await this.prisma.chatSession.update({
-        where: { id: existingSession.id },
-        data: { lastActiveAt: new Date() },
-      });
+      // 如果是 HANDOFF 状态，恢复为 OPEN（用户重新进入后继续 AI 对话）
+      let updatedSession = existingSession;
+      if (existingSession.status === SessionStatus.HANDOFF) {
+        updatedSession = await this.prisma.chatSession.update({
+          where: { id: existingSession.id },
+          data: { status: SessionStatus.OPEN, lastActiveAt: new Date() },
+        });
+      } else {
+        // 更新最后活跃时间
+        updatedSession = await this.prisma.chatSession.update({
+          where: { id: existingSession.id },
+          data: { lastActiveAt: new Date() },
+        });
+      }
       return { session: updatedSession, isNew: false };
     }
 

@@ -17,6 +17,8 @@ const dify_module_1 = require("../dify/dify.module");
 const handoff_module_1 = require("../handoff/handoff.module");
 const user_module_1 = require("../user/user.module");
 const store_module_1 = require("../store/store.module");
+const order_module_1 = require("../order/order.module");
+const intent_router_module_1 = require("../intent-router/intent-router.module");
 let ChatModule = class ChatModule {
 };
 exports.ChatModule = ChatModule;
@@ -29,6 +31,8 @@ exports.ChatModule = ChatModule = __decorate([
             (0, common_1.forwardRef)(() => handoff_module_1.HandoffModule),
             (0, common_1.forwardRef)(() => user_module_1.UserModule),
             (0, common_1.forwardRef)(() => store_module_1.StoreModule),
+            (0, common_1.forwardRef)(() => order_module_1.OrderModule),
+            (0, common_1.forwardRef)(() => intent_router_module_1.IntentRouterModule),
         ],
         providers: [chat_service_1.ChatService, chat_gateway_1.ChatGateway],
         controllers: [chat_controller_1.ChatController],

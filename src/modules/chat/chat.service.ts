@@ -12,6 +12,9 @@ import { DifyService } from '../dify/dify.service';
 import { HandoffService } from '../handoff/handoff.service';
 import { UserService } from '../user/user.service';
 import { StoreService } from '../store/store.service';
+import { OrderInfo, LogisticsInfo } from '../order/order.types';
+import { OrderService } from '../order/order.service';
+import { IntentRouterService, BusinessIntent } from '../intent-router/intent-router.service';
 import { PrismaService } from '../../infra/database/prisma.service';
 import { StoreType, SenderType, MessageType, SessionStatus, ChatSession } from '@prisma/client';
 import { CreateSessionDto, SendMessageDto, SessionResponseDto, MessageResponseDto, CreateOrResumeSessionResponseDto } from './dto/chat.dto';
@@ -33,6 +36,8 @@ export class ChatService {
     private handoffService: HandoffService,
     private userService: UserService,
     private storeService: StoreService,
+    private orderService: OrderService,
+    private intentRouterService: IntentRouterService,
     private prisma: PrismaService,
   ) {}
 
@@ -72,10 +77,11 @@ export class ChatService {
     dto: SendMessageDto,
     onChunk?: (chunk: DifyChunk) => void,
   ): Promise<{ messageId: string; answer: string; conversationId: string }> {
-    this.logger.log(`Sending message to session: ${sessionId}`);
+    this.logger.log(`>>> [ChatService] 发送消息到会话: ${sessionId}, message: ${dto.message}, inputs: ${JSON.stringify(dto.inputs)}`);
 
     // 1. 获取会话，验证状态
     const session = await this.sessionService.findById(sessionId);
+    this.logger.log(`>>> [ChatService] 会话状态: ${session.status}, difyConversationId: ${session.difyConversationId}`);
 
     // 2. 检查是否已转人工
     if (session.status === SessionStatus.HANDOFF) {
@@ -113,7 +119,7 @@ export class ChatService {
       };
     }
 
-    // 5. 保存用户消息
+    // 4. 保存用户消息
     const userMessage = await this.messageService.create(
       sessionId,
       SenderType.USER,
@@ -122,8 +128,66 @@ export class ChatService {
     );
     this.logger.debug(`User message saved: ${userMessage.id}`);
 
-    // 6. 调用 Dify 服务
-    // 首次不传 conversation_id，后续传入
+    // 5. 意图路由（记录日志，后续 Dify 会处理）
+    const intentResult = this.intentRouterService.route(dto.message);
+    this.logger.log(`Intent routed: ${intentResult.intent}, orderNo: ${intentResult.orderNo}, needMoreInfo: ${intentResult.needMoreInfo}`);
+
+    // 6. 所有消息都经过 Dify 处理（包括订单/物流查询）
+    // Dify 会通过 HTTP Request 调用 /api/agent 获取业务数据
+    const aiResponse = await this.handleAIQuery(dto, session.difyConversationId, onChunk);
+
+    // 9. 保存 AI 响应
+    const aiMessage = await this.messageService.create(
+      sessionId,
+      SenderType.AI,
+      aiResponse,
+      MessageType.TEXT,
+    );
+    this.logger.debug(`AI message saved: ${aiMessage.id}`);
+
+    // 10. 返回响应
+    return {
+      messageId: aiMessage.id,
+      answer: aiResponse,
+      conversationId: session.difyConversationId || '',
+    };
+  }
+
+  /**
+   * 处理订单查询
+   */
+  private async handleOrderQuery(orderNo: string): Promise<string> {
+    try {
+      const order = await this.orderService.getOrderStatus(orderNo);
+      return this.formatOrderResponse(order);
+    } catch (error) {
+      this.logger.error(`Order query failed: ${error.message}`);
+      return `未找到订单 ${orderNo} 的信息，请确认订单号是否正确。`;
+    }
+  }
+
+  /**
+   * 处理物流查询
+   */
+  private async handleLogisticsQuery(orderNo: string): Promise<string> {
+    try {
+      const logistics = await this.orderService.getLogistics(orderNo);
+      return this.formatLogisticsResponse(logistics);
+    } catch (error) {
+      this.logger.error(`Logistics query failed: ${error.message}`);
+      return `未找到订单 ${orderNo} 的物流信息，请确认订单号是否正确。`;
+    }
+  }
+
+  /**
+   * 处理普通 AI 对话
+   */
+  private async handleAIQuery(
+    dto: SendMessageDto,
+    conversationId: string | null,
+    onChunk?: (chunk: DifyChunk) => void,
+  ): Promise<string> {
+    this.logger.log(`>>> [ChatService] handleAIQuery: conversationId=${conversationId}, message=${dto.message}`);
     const difyInputs = dto.inputs ? {
       phone: dto.inputs.phone,
       store_id: dto.inputs.store_id,
@@ -131,6 +195,7 @@ export class ChatService {
       channel: dto.inputs.channel,
       customer_id: dto.inputs.customer_id,
     } : undefined;
+    this.logger.log(`>>> [ChatService] Dify inputs: ${JSON.stringify(difyInputs)}`);
 
     const difyDto: DifySendMessageDto = {
       query: dto.message,
@@ -138,33 +203,74 @@ export class ChatService {
     };
 
     const difyResponse = await this.difyService.sendMessage(
-      session.difyConversationId,
+      conversationId,
       difyDto,
       onChunk,
     );
-    this.logger.debug(`Dify response received: ${difyResponse.messageId}`);
 
-    // 7. 保存 difyConversationId（如是新会话）
-    if (!session.difyConversationId && difyResponse.conversationId) {
-      await this.sessionService.updateDifyConversationId(sessionId, difyResponse.conversationId);
-      this.logger.debug(`Dify conversation ID saved: ${difyResponse.conversationId}`);
+    // 保存 difyConversationId（如是新会话）
+    // 注意：这里需要在外部处理
+
+    return difyResponse.answer;
+  }
+
+  /**
+   * 格式化订单响应为自然语言
+   */
+  private formatOrderResponse(order: OrderInfo): string {
+    const lines: string[] = [
+      `订单号：${order.orderNo}`,
+      `订单状态：${order.statusText}`,
+      `订单金额：¥${order.actualAmount}`,
+      `下单时间：${new Date(order.createdAt).toLocaleString('zh-CN')}`,
+    ];
+
+    if (order.paidAt) {
+      lines.push(`支付时间：${new Date(order.paidAt).toLocaleString('zh-CN')}`);
     }
 
-    // 8. 保存 AI 响应
-    const aiMessage = await this.messageService.create(
-      sessionId,
-      SenderType.AI,
-      difyResponse.answer,
-      MessageType.TEXT,
-    );
-    this.logger.debug(`AI message saved: ${aiMessage.id}`);
+    if (order.estimatedShipTime) {
+      lines.push(`预计发货时间：${new Date(order.estimatedShipTime).toLocaleString('zh-CN')}`);
+    }
 
-    // 9. 返回响应
-    return {
-      messageId: aiMessage.id,
-      answer: difyResponse.answer,
-      conversationId: difyResponse.conversationId,
-    };
+    if (order.items && order.items.length > 0) {
+      lines.push('商品信息：');
+      for (const item of order.items) {
+        lines.push(`  - ${item.title} x${item.quantity}`);
+      }
+    }
+
+    if (order.shippingAddress) {
+      lines.push(`收货地址：${order.shippingAddress}`);
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * 格式化物流响应为自然语言
+   */
+  private formatLogisticsResponse(logistics: LogisticsInfo): string {
+    const lines: string[] = [
+      `订单号：${logistics.orderNo}`,
+      `快递公司：${logistics.carrier}`,
+      `运单号：${logistics.trackingNo}`,
+      `当前状态：${logistics.status === 'IN_TRANSIT' ? '运输中' : logistics.status === 'DELIVERED' ? '已送达' : '待发货'}`,
+      `当前位置：${logistics.currentLocation}`,
+    ];
+
+    if (logistics.estimatedDeliveryTime) {
+      lines.push(`预计送达时间：${new Date(logistics.estimatedDeliveryTime).toLocaleString('zh-CN')}`);
+    }
+
+    if (logistics.events && logistics.events.length > 0) {
+      lines.push('物流轨迹：');
+      for (const event of logistics.events.slice(0, 3)) {
+        lines.push(`  [${new Date(event.time).toLocaleString('zh-CN')}] ${event.location} - ${event.description}`);
+      }
+    }
+
+    return lines.join('\n');
   }
 
   // 获取历史消息
@@ -173,24 +279,52 @@ export class ChatService {
     limit: number = 50,
     offset: number = 0,
   ): Promise<MessageResponseDto[]> {
-    // 验证会话存在
-    await this.sessionService.findById(sessionId);
+    try {
+      this.logger.log(`Getting messages for session: ${sessionId}`);
 
-    const messages = await this.messageService.findBySessionId(sessionId, limit, offset);
+      // 验证会话存在
+      const session = await this.sessionService.findById(sessionId);
+      this.logger.log(`Session found: ${session.id}`);
 
-    return messages.map((msg) => ({
-      id: msg.id,
-      sessionId: msg.sessionId,
-      senderType: msg.senderType,
-      content: msg.content,
-      messageType: msg.messageType,
-      createdAt: msg.createdAt,
-    }));
+      const messages = await this.messageService.findBySessionId(sessionId, limit, offset);
+      this.logger.log(`Found ${messages.length} messages`);
+
+      return messages.map((msg) => ({
+        id: msg.id,
+        sessionId: msg.sessionId,
+        senderType: msg.senderType,
+        content: msg.content,
+        messageType: msg.messageType,
+        createdAt: msg.createdAt,
+      }));
+    } catch (error) {
+      this.logger.error(`Error getting messages: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   // 获取会话详情
   async getSession(sessionId: string): Promise<SessionResponseDto> {
     const session = await this.sessionService.findById(sessionId);
+
+    return {
+      id: session.id,
+      userId: session.userId,
+      storeId: session.storeId,
+      storeType: session.storeType,
+      channel: session.channel,
+      difyConversationId: session.difyConversationId,
+      status: session.status,
+      lastActiveAt: session.lastActiveAt,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+    };
+  }
+
+  // 更新会话状态
+  async updateSessionStatus(sessionId: string, status: SessionStatus): Promise<SessionResponseDto> {
+    const session = await this.sessionService.updateStatus(sessionId, status);
+    this.logger.log(`Session ${sessionId} status updated to ${status}`);
 
     return {
       id: session.id,

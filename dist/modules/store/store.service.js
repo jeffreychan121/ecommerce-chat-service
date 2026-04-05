@@ -8,13 +8,32 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var StoreService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StoreService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../infra/database/prisma.service");
-let StoreService = class StoreService {
+let StoreService = StoreService_1 = class StoreService {
     constructor(prisma) {
         this.prisma = prisma;
+        this.logger = new common_1.Logger(StoreService_1.name);
+    }
+    async findAll() {
+        this.logger.log('Finding all stores');
+        return this.prisma.store.findMany({
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+    async createStore(name, storeType) {
+        const id = `store_${Date.now()}`;
+        this.logger.log(`Creating store: ${name}, id: ${id}`);
+        return this.prisma.store.create({
+            data: {
+                id,
+                name,
+                storeType,
+            },
+        });
     }
     async findOrCreateStore(storeId, name, storeType) {
         const existingStore = await this.prisma.store.findUnique({
@@ -36,9 +55,33 @@ let StoreService = class StoreService {
             where: { id },
         });
     }
+    async update(id, data) {
+        return this.prisma.store.update({
+            where: { id },
+            data,
+        });
+    }
+    async deleteStore(id) {
+        const store = await this.prisma.store.findUnique({ where: { id } });
+        if (!store) {
+            throw new common_1.NotFoundException('店铺不存在');
+        }
+        const sessions = await this.prisma.chatSession.findMany({
+            where: { storeId: id },
+            select: { id: true },
+        });
+        const sessionIds = sessions.map(s => s.id);
+        if (sessionIds.length > 0) {
+            await this.prisma.handoffTicket.deleteMany({
+                where: { sessionId: { in: sessionIds } },
+            });
+        }
+        await this.prisma.chatSession.deleteMany({ where: { storeId: id } });
+        await this.prisma.store.delete({ where: { id } });
+    }
 };
 exports.StoreService = StoreService;
-exports.StoreService = StoreService = __decorate([
+exports.StoreService = StoreService = StoreService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], StoreService);

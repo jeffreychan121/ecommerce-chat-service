@@ -1,15 +1,8 @@
-export interface LogisticsInfo {
-    orderId: string;
-    carrier: string;
-    trackingNo: string;
-    status: 'pending' | 'in_transit' | 'delivered';
-    events: Array<{
-        time: string;
-        location: string;
-        description: string;
-    }>;
-}
+import { LogisticsInfo } from '../order/order.types';
+import { OrderService } from '../order/order.service';
 export declare class LogisticsService {
+    private readonly orderService;
     private readonly logger;
-    getLogistics(orderId: string): Promise<LogisticsInfo>;
+    constructor(orderService: OrderService);
+    getLogistics(orderNo: string): Promise<LogisticsInfo>;
 }

@@ -64,6 +64,50 @@ textarea {
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
+/* 知识库状态 */
+.merchant-training .dataset-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.merchant-training .dataset-status .status-badge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.merchant-training .dataset-status .status-badge.ready {
+  background: #10b981;
+  color: #fff;
+}
+
+.merchant-training .dataset-status .status-badge.not-ready {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+}
+
+.merchant-training .dataset-status .dataset-id {
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+}
+
+.merchant-training .dataset-status .create-btn {
+  padding: 8px 16px;
+  background: #667eea;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.merchant-training .dataset-status .create-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .merchant-training .mt-header .back-btn {
   padding: 8px 16px;
   background: rgba(255,255,255,0.1);

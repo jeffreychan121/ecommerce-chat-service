@@ -1,6 +1,5 @@
 import { StoreType } from '@prisma/client';
 export declare class CreateStoreDto {
-    storeId: string;
     name: string;
     storeType: StoreType;
 }

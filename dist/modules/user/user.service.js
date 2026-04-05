@@ -27,6 +27,11 @@ let UserService = class UserService {
             data: { phone },
         });
     }
+    async findByPhone(phone) {
+        return this.prisma.user.findUnique({
+            where: { phone },
+        });
+    }
     async findById(id) {
         return this.prisma.user.findUnique({
             where: { id },

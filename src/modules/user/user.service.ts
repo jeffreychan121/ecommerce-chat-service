@@ -21,6 +21,13 @@ export class UserService {
     });
   }
 
+  // 通过手机号查找用户
+  async findByPhone(phone: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { phone },
+    });
+  }
+
   // 通过 ID 查找用户
   async findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({

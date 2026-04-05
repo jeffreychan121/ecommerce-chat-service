@@ -4,6 +4,7 @@ export declare class DifyInputs {
     store_type: 'self' | 'merchant';
     channel: string;
     customer_id?: string;
+    dataset_id?: string;
 }
 export declare class SendMessageDto {
     query: string;

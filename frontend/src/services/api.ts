@@ -181,4 +181,12 @@ export const trainAllFiles = (storeId: string) =>
 export const chatWithKnowledge = (storeId: string, query: string) =>
   api.post('/api/merchant/chat', { storeId, query });
 
+// 获取店铺知识库状态
+export const getStoreStatus = (storeId: string) =>
+  api.get(`/api/merchant/status/${storeId}`);
+
+// 创建知识库
+export const createDataset = (storeId: string) =>
+  api.post(`/api/merchant/dataset/${storeId}`);
+
 export default api;

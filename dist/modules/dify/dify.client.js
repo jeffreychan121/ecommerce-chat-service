@@ -96,6 +96,31 @@ let DifyClient = DifyClient_1 = class DifyClient {
             throw error;
         }
     }
+    async createDataset(name, description) {
+        const response = await this.client.post('/v1/datasets', {
+            name,
+            description: description || '',
+            indexing_technique: 'high_quality',
+            permission: 'only_me',
+        });
+        return { id: response.data.id };
+    }
+    async createDocument(datasetId, filePath) {
+        const FormData = require('form-data');
+        const fs = require('fs');
+        const form = new FormData();
+        form.append('file', fs.createReadStream(filePath));
+        form.append('indexing_technique', 'high_quality');
+        const response = await this.client.post(`/v1/datasets/${datasetId}/document/create-by-file`, form, { headers: { ...form.getHeaders() } });
+        return response.data;
+    }
+    async getDocuments(datasetId) {
+        const response = await this.client.get(`/v1/datasets/${datasetId}/documents`);
+        return response.data;
+    }
+    async deleteDocument(datasetId, documentId) {
+        await this.client.delete(`/v1/datasets/${datasetId}/documents/${documentId}`);
+    }
 };
 exports.DifyClient = DifyClient;
 exports.DifyClient = DifyClient = DifyClient_1 = __decorate([

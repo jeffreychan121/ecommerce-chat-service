@@ -6,7 +6,10 @@ export declare class ChatController {
     constructor(chatService: ChatService);
     createOrResumeSession(dto: CreateSessionDto): Promise<CreateOrResumeSessionResponseDto>;
     getSession(id: string): Promise<SessionResponseDto>;
-    getMessages(id: string, limit: number, offset: number): Promise<MessageResponseDto[]>;
+    updateSessionStatus(id: string, body: {
+        status: 'OPEN' | 'HANDOFF' | 'CLOSED';
+    }): Promise<SessionResponseDto>;
+    getMessages(id: string, limit?: string, offset?: string): Promise<MessageResponseDto[]>;
     sendMessage(id: string, dto: SendMessageDto): Promise<{
         messageId: string;
         answer: string;

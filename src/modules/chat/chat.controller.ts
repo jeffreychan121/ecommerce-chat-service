@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   Param,
   ParseUUIDPipe,
@@ -32,13 +33,23 @@ export class ChatController {
     return this.chatService.getSession(id);
   }
 
+  @Patch('sessions/:id/status')
+  async updateSessionStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { status: 'OPEN' | 'HANDOFF' | 'CLOSED' },
+  ) {
+    return this.chatService.updateSessionStatus(id, body.status);
+  }
+
   @Get('sessions/:id/messages')
   async getMessages(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('limit', new DefaultValuePipe(50)) limit: number,
-    @Query('offset', new DefaultValuePipe(0)) offset: number,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
   ): Promise<MessageResponseDto[]> {
-    return this.chatService.getMessages(id, limit, offset);
+    const parsedLimit = limit ? parseInt(limit, 10) : 50;
+    const parsedOffset = offset ? parseInt(offset, 10) : 0;
+    return this.chatService.getMessages(id, parsedLimit, parsedOffset);
   }
 
   @Post('sessions/:id/messages')

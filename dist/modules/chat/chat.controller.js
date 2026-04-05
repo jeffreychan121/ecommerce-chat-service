@@ -26,8 +26,13 @@ let ChatController = class ChatController {
     async getSession(id) {
         return this.chatService.getSession(id);
     }
+    async updateSessionStatus(id, body) {
+        return this.chatService.updateSessionStatus(id, body.status);
+    }
     async getMessages(id, limit, offset) {
-        return this.chatService.getMessages(id, limit, offset);
+        const parsedLimit = limit ? parseInt(limit, 10) : 50;
+        const parsedOffset = offset ? parseInt(offset, 10) : 0;
+        return this.chatService.getMessages(id, parsedLimit, parsedOffset);
     }
     async sendMessage(id, dto) {
         return this.chatService.sendMessage(id, dto);
@@ -71,12 +76,20 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "getSession", null);
 __decorate([
+    (0, common_1.Patch)('sessions/:id/status'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "updateSessionStatus", null);
+__decorate([
     (0, common_1.Get)('sessions/:id/messages'),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
-    __param(1, (0, common_1.Query)('limit', new common_1.DefaultValuePipe(50))),
-    __param(2, (0, common_1.Query)('offset', new common_1.DefaultValuePipe(0))),
+    __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('offset')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number, Number]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "getMessages", null);
 __decorate([

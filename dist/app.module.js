@@ -22,7 +22,9 @@ const handoff_module_1 = require("./modules/handoff/handoff.module");
 const user_module_1 = require("./modules/user/user.module");
 const store_module_1 = require("./modules/store/store.module");
 const order_module_1 = require("./modules/order/order.module");
-const logistics_module_1 = require("./modules/logistics/logistics.module");
+const intent_router_module_1 = require("./modules/intent-router/intent-router.module");
+const agent_module_1 = require("./modules/agent/agent.module");
+const merchant_module_1 = require("./modules/merchant/merchant.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -42,7 +44,9 @@ exports.AppModule = AppModule = __decorate([
             user_module_1.UserModule,
             store_module_1.StoreModule,
             order_module_1.OrderModule,
-            logistics_module_1.LogisticsModule,
+            intent_router_module_1.IntentRouterModule,
+            agent_module_1.AgentModule,
+            merchant_module_1.MerchantModule,
         ],
     })
 ], AppModule);

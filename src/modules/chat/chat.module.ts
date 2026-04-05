@@ -8,6 +8,8 @@ import { DifyModule } from '../dify/dify.module';
 import { HandoffModule } from '../handoff/handoff.module';
 import { UserModule } from '../user/user.module';
 import { StoreModule } from '../store/store.module';
+import { OrderModule } from '../order/order.module';
+import { IntentRouterModule } from '../intent-router/intent-router.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { StoreModule } from '../store/store.module';
     forwardRef(() => HandoffModule),
     forwardRef(() => UserModule),
     forwardRef(() => StoreModule),
+    forwardRef(() => OrderModule),
+    forwardRef(() => IntentRouterModule),
   ],
   providers: [ChatService, ChatGateway],
   controllers: [ChatController],

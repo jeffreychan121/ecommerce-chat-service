@@ -33,10 +33,19 @@ let SessionService = SessionService_1 = class SessionService {
             },
         });
         if (existingSession) {
-            const updatedSession = await this.prisma.chatSession.update({
-                where: { id: existingSession.id },
-                data: { lastActiveAt: new Date() },
-            });
+            let updatedSession = existingSession;
+            if (existingSession.status === client_1.SessionStatus.HANDOFF) {
+                updatedSession = await this.prisma.chatSession.update({
+                    where: { id: existingSession.id },
+                    data: { status: client_1.SessionStatus.OPEN, lastActiveAt: new Date() },
+                });
+            }
+            else {
+                updatedSession = await this.prisma.chatSession.update({
+                    where: { id: existingSession.id },
+                    data: { lastActiveAt: new Date() },
+                });
+            }
             return { session: updatedSession, isNew: false };
         }
         const newSession = await this.prisma.chatSession.create({

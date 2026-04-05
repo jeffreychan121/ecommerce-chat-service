@@ -9,12 +9,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StoreModule = void 0;
 const common_1 = require("@nestjs/common");
 const store_service_1 = require("./store.service");
+const store_controller_1 = require("./store.controller");
 let StoreModule = class StoreModule {
 };
 exports.StoreModule = StoreModule;
 exports.StoreModule = StoreModule = __decorate([
     (0, common_1.Module)({
         providers: [store_service_1.StoreService],
+        controllers: [store_controller_1.StoreController],
         exports: [store_service_1.StoreService],
     })
 ], StoreModule);

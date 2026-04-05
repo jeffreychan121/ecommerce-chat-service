@@ -4,10 +4,6 @@ import { StoreType } from '@prisma/client';
 export class CreateStoreDto {
   @IsString()
   @IsNotEmpty()
-  storeId: string;
-
-  @IsString()
-  @IsNotEmpty()
   name: string;
 
   @IsEnum(StoreType)

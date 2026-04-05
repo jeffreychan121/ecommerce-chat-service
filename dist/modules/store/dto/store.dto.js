@@ -19,11 +19,6 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateStoreDto.prototype, "storeId", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
 ], CreateStoreDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsEnum)(client_1.StoreType),

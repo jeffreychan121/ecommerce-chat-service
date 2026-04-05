@@ -29,14 +29,44 @@ export class MerchantService {
     private readonly prisma: PrismaService,
   ) {}
 
-  // 自动创建知识库（店铺入驻时调用）
-  async createDatasetForStore(storeId: string, storeName: string): Promise<string> {
+  // 获取店铺知识库状态
+  async getStoreStatus(storeId: string) {
+    const store = await this.storeService.findById(storeId);
+    if (!store) {
+      throw new BadRequestException('店铺不存在');
+    }
+    return {
+      storeId: store.id,
+      storeName: store.name,
+      hasDataset: !!store.difyDatasetId,
+      datasetId: store.difyDatasetId || null,
+      fileCount: await this.prisma.trainingJob.count({ where: { storeId } }),
+    };
+  }
+
+  // 创建知识库（手动调用）
+  async createDatasetForStore(storeId: string): Promise<{ datasetId: string }> {
+    const store = await this.storeService.findById(storeId);
+    if (!store) {
+      throw new BadRequestException('店铺不存在');
+    }
+
+    // 如果已有知识库，返回已有ID
+    if (store.difyDatasetId) {
+      return { datasetId: store.difyDatasetId };
+    }
+
+    // 调用 Dify API 创建知识库
     const dataset = await this.difyService.createDataset(
-      `Store-${storeName}`,
-      `商家知识库 - ${storeName}`
+      `Store-${store.name}`,
+      `商家知识库 - ${store.name}`
     );
+
+    // 保存知识库ID到店铺
     await this.storeService.update(storeId, { difyDatasetId: dataset.id });
-    return dataset.id;
+
+    this.logger.log(`为店铺 ${store.name} 创建知识库: ${dataset.id}`);
+    return { datasetId: dataset.id };
   }
 
   // 上传文件
