@@ -85,6 +85,11 @@ class SocketService {
     this.socket?.on('handoff-status', callback);
   }
 
+  // 监听客服回复
+  onAgentMessage(callback: (data: any) => void) {
+    this.socket?.on('agent-message', callback);
+  }
+
   // 移除监听
   offMessage(callback?: (data: any) => void) {
     if (callback) {

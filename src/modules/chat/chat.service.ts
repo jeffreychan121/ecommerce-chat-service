@@ -6,6 +6,7 @@ import {
   forwardRef,
   Inject,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SessionService } from '../session/session.service';
 import { MessageService } from '../message/message.service';
 import { DifyService } from '../dify/dify.service';
@@ -39,6 +40,7 @@ export class ChatService {
     private orderService: OrderService,
     private intentRouterService: IntentRouterService,
     private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   // 创建或恢复会话
@@ -85,7 +87,31 @@ export class ChatService {
 
     // 2. 检查是否已转人工
     if (session.status === SessionStatus.HANDOFF) {
-      throw new BadRequestException('会话已转人工，无法继续发送消息');
+      // 会话已转人工，保存用户消息并广播给客服
+      const userMessage = await this.messageService.create(
+        sessionId,
+        SenderType.USER,
+        dto.message,
+        MessageType.TEXT,
+      );
+      this.logger.debug(`User message saved in handoff mode: ${userMessage.id}`);
+
+      // 广播给客服
+      this.eventEmitter.emit('customer.message', {
+        sessionId,
+        message: {
+          id: userMessage.id,
+          senderType: SenderType.USER,
+          content: dto.message,
+          createdAt: userMessage.createdAt.toISOString(),
+        },
+      });
+
+      return {
+        messageId: userMessage.id,
+        answer: '',
+        conversationId: session.difyConversationId || '',
+      };
     }
 
     // 3. 检查是否命中转人工关键词
@@ -132,7 +158,34 @@ export class ChatService {
     const intentResult = this.intentRouterService.route(dto.message);
     this.logger.log(`Intent routed: ${intentResult.intent}, orderNo: ${intentResult.orderNo}, needMoreInfo: ${intentResult.needMoreInfo}`);
 
-    // 6. 所有消息都经过 Dify 处理（包括订单/物流查询）
+    // 6. 如果是下单意图，直接创建订单并返回
+    if (intentResult.intent === BusinessIntent.ORDER_CREATE) {
+      const orderResponse = await this.handleOrderCreate(
+        intentResult.productName || '',
+        intentResult.quantity || 1,
+      );
+      // 保存用户消息
+      await this.messageService.create(
+        sessionId,
+        SenderType.USER,
+        dto.message,
+        MessageType.TEXT,
+      );
+      // 保存 AI 响应
+      const aiMessage = await this.messageService.create(
+        sessionId,
+        SenderType.AI,
+        orderResponse,
+        MessageType.TEXT,
+      );
+      return {
+        messageId: aiMessage.id,
+        answer: orderResponse,
+        conversationId: session.difyConversationId || '',
+      };
+    }
+
+    // 7. 所有消息都经过 Dify 处理（包括订单/物流查询）
     // Dify 会通过 HTTP Request 调用 /api/agent 获取业务数据
     const aiResponse = await this.handleAIQuery(dto, session.difyConversationId, onChunk);
 
@@ -176,6 +229,44 @@ export class ChatService {
     } catch (error) {
       this.logger.error(`Logistics query failed: ${error.message}`);
       return `未找到订单 ${orderNo} 的物流信息，请确认订单号是否正确。`;
+    }
+  }
+
+  /**
+   * 处理下单请求
+   */
+  private async handleOrderCreate(
+    productName: string,
+    quantity: number,
+  ): Promise<string> {
+    try {
+      const order = await this.orderService.createOrderFromChat(
+        productName,
+        quantity,
+      );
+
+      // 发出订单创建事件
+      this.eventEmitter.emit('order.created', order);
+
+      // 格式化响应
+      const lines = [
+        '订单已创建！',
+        '',
+        `订单号：${order.orderNo}`,
+        `商品：${order.items?.[0]?.title || productName} x ${quantity}`,
+        `单价：¥${order.items?.[0]?.price?.toFixed(2) || '0.00'}`,
+        `总价：¥${order.actualAmount?.toFixed(2)}`,
+        `状态：${order.statusText}`,
+      ];
+
+      if (order.logistics) {
+        lines.push(`快递：${order.logistics.carrier} ${order.logistics.trackingNo}`);
+      }
+
+      return lines.join('\n');
+    } catch (error) {
+      this.logger.error(`handleOrderCreate failed: ${error.message}`);
+      return '抱歉，创建订单失败，请稍后重试。';
     }
   }
 

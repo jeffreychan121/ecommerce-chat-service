@@ -8,10 +8,13 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { SendMessageDto, CreateSessionDto } from './dto/chat.dto';
 import { DifyChunk } from '../dify/dto/dify.dto';
+import { OrderInfo } from '../order/order.types';
+import { HandoffService, AgentMessage } from '../handoff/handoff.service';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -26,7 +29,40 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // 维护每个会话的订阅客户端
   private sessionClients: Map<string, Set<string>> = new Map();
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private eventEmitter: EventEmitter2,
+    private handoffService: HandoffService,
+  ) {
+    // 订阅订单创建事件，广播给所有客户端
+    this.eventEmitter.on('order.created', (order: OrderInfo) => {
+      this.logger.log(`Broadcasting order created: ${order.orderNo}`);
+      this.server.emit('order-created', order);
+    });
+
+    // 订阅客服消息事件，推送给客户
+    this.eventEmitter.on('agent.message', (data: { sessionId: string; message: AgentMessage }) => {
+      this.logger.log(`Broadcasting agent message to session: ${data.sessionId}`);
+      this.server.to(data.sessionId).emit('agent-message', data.message);
+    });
+
+    // 订阅客户消息事件，推送给客服
+    this.eventEmitter.on('customer.message', (data: { sessionId: string; message: any }) => {
+      this.logger.log(`Broadcasting customer message to agents: ${data.sessionId}`);
+      this.server.emit('customer-message', {
+        sessionId: data.sessionId,
+        ...data.message,
+      });
+    });
+  }
+
+  /**
+   * 广播转人工队列更新
+   */
+  async broadcastQueueUpdate() {
+    const queue = await this.handoffService.getPendingQueue();
+    this.server.emit('handoff-queue-update', queue);
+  }
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
@@ -59,6 +95,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return { success: false, error: 'Session not found' };
     }
 
+    // 添加到 room（这样 server.to(sessionId) 才能找到客户端）
+    await client.join(sessionId);
+
     // 添加到会话订阅列表
     if (!this.sessionClients.has(sessionId)) {
       this.sessionClients.set(sessionId, new Set());
@@ -74,6 +113,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody('sessionId') sessionId: string,
   ) {
     this.logger.log(`Client ${client.id} leaving session: ${sessionId}`);
+
+    // 从 room 中移除
+    client.leave(sessionId);
 
     const clients = this.sessionClients.get(sessionId);
     if (clients) {

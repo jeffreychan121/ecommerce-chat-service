@@ -1,49 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { createSession, sendMessage, handoff, getMessages, updateSessionStatus } from '../services/api';
 import type { CreateSessionRequest, SendMessageRequest } from '../types';
+import { formatAssistantMessage } from '../utils/formatMessage';
 
-// 转换 markdown 表格为普通文本
+// 转换 markdown 表格为普通文本（使用新的格式化工具）
 function convertMarkdownToText(content: string): string {
-  const lines = content.trim().split('\n');
-  let result = '';
-  let inTable = false;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // 检测表格行（包含 | 且有 | 分隔）
-    if (trimmed.includes('|') && (trimmed.startsWith('|') || trimmed.endsWith('|'))) {
-      // 跳过表头分隔行 (---|:)
-      if (trimmed.match(/^[\|:\-\s]+$/)) {
-        continue;
-      }
-
-      inTable = true;
-      const cells = trimmed.split('|').filter(c => c.trim());
-      // 过滤掉分隔符（包含 - 或 : 的行）
-      if (cells.every(c => c.match(/^[\s:\-]+$/))) {
-        continue;
-      }
-      result += cells.map(c => c.trim()).join('  ') + '\n';
-    } else {
-      if (inTable) {
-        result += '\n';
-        inTable = false;
-      }
-      // 处理普通标题 (# ## ###)
-      let processedLine = trimmed
-        .replace(/^#{1,6}\s+/, '')
-        .replace(/\*\*([^*]+)\*\*/g, '$1')
-        .replace(/\*([^*]+)\*/g, '$1')
-        .replace(/`([^`]+)`/g, '$1')
-        .replace(/`$/, '');
-      if (processedLine) {
-        result += processedLine + '\n';
-      }
-    }
-  }
-
-  return result.trim() || content;
+  // 使用 formatAssistantMessage 移除 markdown 残留
+  return formatAssistantMessage(content);
 }
 
 interface ChatMessage {
@@ -83,6 +47,40 @@ export function useChat(options: UseChatOptions): UseChatReturn {
   useEffect(() => {
     configRef.current = initialConfig;
   }, [initialConfig]);
+
+  // WebSocket 连接
+  const socketRef = useRef<Socket | null>(null);
+
+  // 设置 WebSocket 监听
+  useEffect(() => {
+    if (sessionId && isHandoff) {
+      // 连接 WebSocket 并加入会话
+      socketRef.current = io('http://localhost:3000', { path: '/ws/chat' });
+
+      socketRef.current.on('connect', () => {
+        console.log('[useChat] WebSocket connected');
+        socketRef.current?.emit('join-session', { sessionId });
+      });
+
+      // 监听客服回复
+      socketRef.current.on('agent-message', (data: any) => {
+        console.log('[useChat] 收到客服回复:', data);
+        const agentMessage: ChatMessage = {
+          type: 'text',
+          content: data.content || data.message || '',
+          position: 'left',
+          timestamp: Date.now(),
+        };
+        setMessages((prev) => [...prev, agentMessage]);
+      });
+
+      return () => {
+        socketRef.current?.emit('leave-session', { sessionId });
+        socketRef.current?.disconnect();
+        socketRef.current = null;
+      };
+    }
+  }, [sessionId, isHandoff]);
 
   // 初始化会话
   const initSession = useCallback(async (overrideConfig?: Partial<CreateSessionRequest>) => {
@@ -165,10 +163,14 @@ export function useChat(options: UseChatOptions): UseChatReturn {
     };
     setMessages((prev) => [...prev, userMessage]);
 
-    // 如果是转人工状态，只发送消息不调用AI
+    // 如果是转人工状态，发送消息到后端（后端会保存并广播给客服）
     if (isHandoff) {
-      // TODO: 发送消息给人工客服API
-      console.log('发送消息给人工客服:', content);
+      try {
+        const response = await sendMessage(sessionId, { message: content });
+        console.log('发送消息给人工客服成功:', response);
+      } catch (error) {
+        console.error('发送消息给人工客服失败:', error);
+      }
       return;
     }
 
@@ -245,7 +247,7 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 
       const handoffMessage: ChatMessage = {
         type: 'text',
-        content: `您已成功转接人工服务，当前排队号：${response.queueNo}，请稍候...`,
+        content: '您已成功转接人工服务，请稍候，客服将为您服务...',
         position: 'left',
         timestamp: Date.now(),
       };
