@@ -1,11 +1,13 @@
 import { IsString, IsOptional, IsNumber, IsEnum } from 'class-validator';
 
 export class SearchProductsDto {
+  @IsOptional()
   @IsString()
-  store_id: string;
+  store_id?: string;
 
+  @IsOptional()
   @IsEnum(['self', 'merchant'])
-  store_type: 'self' | 'merchant';
+  store_type?: 'self' | 'merchant';
 
   @IsString()
   query: string;

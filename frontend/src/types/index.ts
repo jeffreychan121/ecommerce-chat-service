@@ -16,13 +16,19 @@ export interface ChatMsg {
   senderType?: SenderType;
   timestamp?: number;
   messageType?: MessageType;
-  // 预留：卡片数据
+  // 卡片数据
   card?: {
     type: 'order' | 'product' | 'logistics' | 'coupon';
-    title: string;
-    data: Record<string, any>;
+    title?: string;
+    data?: Record<string, any>;
+    products?: Array<{
+      sku_id: string;
+      name: string;
+      price: number;
+      short_reason: string;
+    }>;
   };
-  // 预留：图片
+  // 图片
   imageUrl?: string;
 }
 

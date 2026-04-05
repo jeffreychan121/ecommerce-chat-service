@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { createSession, sendMessage, handoff, getMessages, updateSessionStatus } from '../services/api';
+import { createSession, sendMessage, handoff, getMessages, updateSessionStatus, searchProducts } from '../services/api';
 import type { CreateSessionRequest, SendMessageRequest } from '../types';
 import { formatAssistantMessage } from '../utils/formatMessage';
 
@@ -15,7 +15,22 @@ interface ChatMessage {
   content: string;
   position: 'left' | 'right' | 'center';
   timestamp?: number;
+  card?: {
+    type: 'product';
+    products: Array<{
+      sku_id: string;
+      name: string;
+      price: number;
+      short_reason: string;
+    }>;
+  };
 }
+
+// 商品推荐关键词
+const PRODUCT_KEYWORDS = [
+  '推荐', '有什么', '想买', '买什么', '电子产品', '手机', '电脑', '平板', '耳机', '手表',
+  'iPhone', 'MacBook', 'iPad', 'AirPods', 'Apple Watch', '有什么产品', '有什么推荐'
+];
 
 export interface UseChatOptions {
   initialConfig: CreateSessionRequest;
@@ -172,6 +187,48 @@ export function useChat(options: UseChatOptions): UseChatReturn {
         console.error('发送消息给人工客服失败:', error);
       }
       return;
+    }
+
+    // 检查是否是商品推荐关键词
+    const isProductQuery = PRODUCT_KEYWORDS.some(keyword =>
+      content.toLowerCase().includes(keyword.toLowerCase())
+    );
+
+    // 如果是商品推荐，先调用 API 获取商品
+    if (isProductQuery) {
+      setIsLoading(true);
+      try {
+        const productResponse = await searchProducts(content, configRef.current.storeId);
+
+        if (productResponse.items && productResponse.items.length > 0) {
+          // 添加商品卡片消息
+          const productCardMessage: ChatMessage = {
+            type: 'card',
+            content: '为您推荐以下商品：',
+            position: 'left',
+            timestamp: Date.now(),
+            card: {
+              type: 'product',
+              products: productResponse.items,
+            },
+          };
+          setMessages((prev) => [...prev, productCardMessage]);
+        } else {
+          // 没有商品，返回 AI 回复
+          const aiMessage: ChatMessage = {
+            type: 'text',
+            content: '抱歉，暂未找到相关商品，请您换个关键词试试~',
+            position: 'left',
+            timestamp: Date.now(),
+          };
+          setMessages((prev) => [...prev, aiMessage]);
+        }
+        setIsLoading(false);
+        return;
+      } catch (error) {
+        console.error('商品搜索失败:', error);
+        // 搜索失败时继续走 AI 流程
+      }
     }
 
     setIsLoading(true);

@@ -17,11 +17,50 @@ const api = axios.create({
 export interface LoginResponse {
   userId: string;
   phone: string;
+  storeId?: string;
+  storeName?: string;
 }
 
 // 手机号登录
 export async function login(phone: string): Promise<LoginResponse> {
   const response = await api.post<LoginResponse>('/api/auth/login', { phone });
+  return response.data;
+}
+
+// ===== 导购相关 =====
+
+// 商品搜索
+export interface ProductItem {
+  sku_id: string;
+  name: string;
+  price: number;
+  detail_url: string;
+  short_reason: string;
+}
+
+export interface SearchProductsResponse {
+  items: ProductItem[];
+}
+
+export async function searchProducts(query: string, storeId?: string): Promise<SearchProductsResponse> {
+  const response = await api.post<SearchProductsResponse>('/api/guide/search-products', {
+    query,
+    store_id: storeId,
+  });
+  return response.data;
+}
+
+// 创建留资
+export async function createLead(data: {
+  userPhone: string;
+  storeId: string;
+  skuId: string;
+  skuName: string;
+  price: number;
+  quantity?: number;
+  intent: 'buy' | 'consult' | 'compare';
+}): Promise<{ success: boolean; lead_id: string; message: string }> {
+  const response = await api.post('/api/guide/create-lead', data);
   return response.data;
 }
 
@@ -173,6 +212,14 @@ export const deleteTrainingFile = (jobId: string) =>
 export const trainFile = (jobId: string) =>
   api.post(`/api/merchant/files/${jobId}/train`);
 
+// 启用文档
+export const enableFile = (jobId: string) =>
+  api.post(`/api/merchant/files/${jobId}/enable`);
+
+// 禁用文档
+export const disableFile = (jobId: string) =>
+  api.post(`/api/merchant/files/${jobId}/disable`);
+
 // 训练所有文件
 export const trainAllFiles = (storeId: string) =>
   api.post(`/api/merchant/files/${storeId}/train-all`);
@@ -185,8 +232,24 @@ export const chatWithKnowledge = (storeId: string, query: string) =>
 export const getStoreStatus = (storeId: string) =>
   api.get(`/api/merchant/status/${storeId}`);
 
-// 创建知识库
-export const createDataset = (storeId: string) =>
-  api.post(`/api/merchant/dataset/${storeId}`);
+// 创建知识库（支持自定义参数）
+export interface CreateDatasetParams {
+  name?: string;
+  description?: string;
+  indexing_technique?: string;
+  permission?: string;
+  search_method?: string;
+  top_k?: number;
+  score_threshold_enabled?: boolean;
+  score_threshold?: number;
+  doc_form?: string;
+}
+
+export const createDataset = (storeId: string, params?: CreateDatasetParams) =>
+  api.post(`/api/merchant/dataset/${storeId}`, params);
+
+// 删除知识库
+export const deleteDataset = (storeId: string) =>
+  api.delete(`/api/merchant/dataset/${storeId}`);
 
 export default api;

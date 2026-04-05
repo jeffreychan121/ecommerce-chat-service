@@ -7,16 +7,29 @@ import { DifyChunk, DifyResponse } from './dto/dify.dto';
 export class DifyClient {
   private readonly logger = new Logger(DifyClient.name);
   private readonly client: AxiosInstance;
+  private readonly appClient: AxiosInstance;
 
   constructor(private configService: ConfigService) {
     const baseURL = this.configService.get<string>('dify.baseUrl') || 'http://localhost/v1';
     const apiKey = this.configService.get<string>('dify.apiKey') || '';
+    const appToken = this.configService.get<string>('dify.appToken') || '';
     const timeout = this.configService.get<number>('dify.timeout') || 30000;
 
+    // API Token client (for knowledge base operations)
     this.client = axios.create({
       baseURL,
       headers: {
         'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout,
+    });
+
+    // App Token client (for chat messages)
+    this.appClient = axios.create({
+      baseURL,
+      headers: {
+        'Authorization': `Bearer ${appToken}`,
         'Content-Type': 'application/json',
       },
       timeout,
@@ -46,10 +59,10 @@ export class DifyClient {
       requestBody.conversation_id = conversationId;
     }
 
-    this.logger.log(`Sending message to Dify: ${url}, conversationId: ${conversationId || 'new'}`);
+    this.logger.log(`[DifyClient] 请求: ${url}, conversationId=${conversationId || 'new'}`);
 
     try {
-      const response = await this.client.post(url, requestBody, {
+      const response = await this.appClient.post(url, requestBody, {
         responseType: 'stream',
       });
 
@@ -84,7 +97,7 @@ export class DifyClient {
         });
 
         response.data.on('end', () => {
-          this.logger.log('Dify stream completed');
+          this.logger.log('[DifyClient] 流式响应完成');
           resolve({
             messageId,
             conversationId: conversationIdResult,
@@ -93,51 +106,113 @@ export class DifyClient {
         });
 
         response.data.on('error', (err: Error) => {
-          this.logger.error(`Dify stream error: ${err.message}`);
+          this.logger.error(`[DifyClient] 流式响应错误: ${err.message}`);
           reject(err);
         });
       });
     } catch (error: any) {
-      this.logger.error(`Dify request failed: ${error.message}`);
+      this.logger.error(`[DifyClient] 请求失败: ${error.message}`);
       throw error;
     }
   }
 
   // 创建知识库
-  async createDataset(name: string, description?: string): Promise<{ id: string }> {
-    const response = await this.client.post('/v1/datasets', {
-      name,
-      description: description || '',
-      indexing_technique: 'high_quality',
-      permission: 'only_me',
-    });
+  async createDataset(options: {
+    name: string;
+    description?: string;
+    indexing_technique?: string;
+    permission?: string;
+    retrieval_model?: {
+      search_method?: string;
+      top_k?: number;
+      reranking_enable?: boolean;
+      score_threshold_enabled?: boolean;
+      score_threshold?: number;
+    };
+    doc_form?: string;
+  }): Promise<{ id: string }> {
+    const requestBody: Record<string, any> = {
+      name: options.name,
+      description: options.description || '',
+      indexing_technique: options.indexing_technique || 'high_quality',
+      permission: options.permission || 'only_me',
+    };
+
+    // 添加检索模型设置
+    if (options.retrieval_model) {
+      requestBody.retrieval_model = {
+        search_method: options.retrieval_model.search_method || 'semantic_search',
+        top_k: options.retrieval_model.top_k || 2,
+        reranking_enable: options.retrieval_model.reranking_enable || false,
+        score_threshold_enabled: options.retrieval_model.score_threshold_enabled || false,
+        score_threshold: options.retrieval_model.score_threshold || 0,
+      };
+    }
+
+    // 添加文档格式
+    if (options.doc_form) {
+      requestBody.doc_form = options.doc_form;
+    }
+
+    const response = await this.client.post('/datasets', requestBody);
     return { id: response.data.id };
   }
 
   // 上传文档到知识库
-  async createDocument(datasetId: string, filePath: string): Promise<{ document: { id: string } }> {
-    const FormData = require('form-data');
+  async createDocument(datasetId: string, filePath: string): Promise<{ document: { id: string }, documentId: string }> {
     const fs = require('fs');
-    const form = new FormData();
-    form.append('file', fs.createReadStream(filePath));
-    form.append('indexing_technique', 'high_quality');
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const fileName = filePath.split('/').pop() || 'document.txt';
 
     const response = await this.client.post(
-      `/v1/datasets/${datasetId}/document/create-by-file`,
-      form,
-      { headers: { ...form.getHeaders() } }
+      `/datasets/${datasetId}/document/create-by-text`,
+      {
+        name: fileName,
+        text: fileContent,
+        indexing_technique: 'high_quality',
+        process_rule: { mode: 'automatic' },
+      }
     );
-    return response.data;
+    // 返回 document 对象和 documentId
+    return {
+      document: response.data.document,
+      documentId: response.data.document.id,
+    };
   }
 
   // 获取文档列表
   async getDocuments(datasetId: string): Promise<{ documents: any[] }> {
-    const response = await this.client.get(`/v1/datasets/${datasetId}/documents`);
+    const response = await this.client.get(`/datasets/${datasetId}/documents`);
     return response.data;
   }
 
   // 删除文档
   async deleteDocument(datasetId: string, documentId: string): Promise<void> {
-    await this.client.delete(`/v1/datasets/${datasetId}/documents/${documentId}`);
+    await this.client.delete(`/datasets/${datasetId}/documents/${documentId}`);
+  }
+
+  // 删除知识库
+  async deleteDataset(datasetId: string): Promise<void> {
+    await this.client.delete(`/datasets/${datasetId}`);
+  }
+
+  // 禁用文档（尝试调用 Dify API，如果失败则记录警告）
+  async disableDocument(datasetId: string, documentId: string): Promise<void> {
+    try {
+      // 尝试 Dify API - 根据文档禁用文档应该是某个操作端点
+      // 先尝试通过更新文档方式来禁用
+      await this.client.post(`/datasets/${datasetId}/documents/${documentId}/disable`, {});
+    } catch (error: any) {
+      this.logger.warn(`Dify disable document API failed: ${error.message}. Document will be marked as disabled locally.`);
+    }
+  }
+
+  // 启用文档
+  async enableDocument(datasetId: string, documentId: string): Promise<void> {
+    try {
+      await this.client.post(`/datasets/${datasetId}/documents/${documentId}/enable`, {});
+    } catch (error: any) {
+      this.logger.warn(`Dify enable document API failed: ${error.message}. Document will be marked as enabled locally.`);
+    }
   }
 }
