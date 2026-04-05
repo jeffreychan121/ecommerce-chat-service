@@ -104,6 +104,23 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
     }
   };
 
+  const getSenderLabel = (type: string) => {
+    if (type === 'USER') return '客户';
+    if (type === 'AI') return 'AI';
+    if (type === 'HUMAN') return '我';
+    return type;
+  };
+
+  const getSenderStyle = (type: string): React.CSSProperties => {
+    const isLeft = type === 'USER';
+    return {
+      background: isLeft ? 'rgba(24, 144, 255, 0.15)' : type === 'HUMAN' ? 'rgba(82, 196, 26, 0.15)' : 'rgba(139, 92, 246, 0.15)',
+      border: isLeft ? '1px solid rgba(24, 144, 255, 0.3)' : type === 'HUMAN' ? '1px solid rgba(82, 196, 26, 0.3)' : '1px solid rgba(139, 92, 246, 0.3)',
+      marginLeft: isLeft ? '0' : 'auto',
+      marginRight: isLeft ? 'auto' : '0',
+    };
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -219,29 +236,50 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
               暂无消息记录
             </div>
           ) : (
-            messages.map((msg, index) => (
-              <div
-                key={msg.id}
-                style={{
-                  display: 'flex',
-                  width: '100%',
-                  marginBottom: '16px',
-                  animation: `fadeIn 0.3s ease ${index * 0.05}s both`,
-                }}
-              >
-                <MessageBubble
-                  message={{
-                    id: msg.id,
-                    type: 'text',
-                    content: msg.content,
-                    senderType: msg.senderType === 'USER' ? 'user' : msg.senderType === 'HUMAN' ? 'human' : 'ai',
-                    position: msg.senderType === 'USER' ? 'right' : 'left',
-                    timestamp: msg.createdAt ? new Date(msg.createdAt).getTime() : undefined,
+            messages.map((msg, index) => {
+              const senderStyle = getSenderStyle(msg.senderType);
+              return (
+                <div
+                  key={msg.id}
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    marginBottom: '16px',
+                    ...senderStyle,
+                    animation: `fadeIn 0.3s ease ${index * 0.05}s both`,
                   }}
-                  userPhone={userPhone}
-                />
-              </div>
-            ))
+                >
+                  <div style={{
+                    padding: '14px 18px',
+                    borderRadius: '16px',
+                    maxWidth: '75%',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    background: senderStyle.background,
+                    border: senderStyle.border,
+                  }}>
+                    <div style={{
+                      fontSize: '12px',
+                      color: msg.senderType === 'USER' ? '#1890ff' : msg.senderType === 'HUMAN' ? '#52c41a' : '#8b5cf6',
+                      marginBottom: '6px',
+                      fontWeight: 500,
+                    }}>
+                      {getSenderLabel(msg.senderType)}
+                    </div>
+                    <MessageBubble
+                      message={{
+                        id: msg.id,
+                        type: 'text',
+                        content: msg.content,
+                        senderType: msg.senderType === 'USER' ? 'user' : msg.senderType === 'HUMAN' ? 'human' : 'ai',
+                        position: msg.senderType === 'HUMAN' ? 'right' : 'left',
+                        timestamp: msg.createdAt ? new Date(msg.createdAt).getTime() : undefined,
+                      }}
+                      userPhone={userPhone}
+                    />
+                  </div>
+                </div>
+              );
+            })
           )}
           <div ref={messagesEndRef} />
         </div>
