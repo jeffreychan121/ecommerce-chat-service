@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import type { Store } from '../services/api';
 
 interface ChatHeaderProps {
   title?: string;
@@ -9,6 +10,8 @@ interface ChatHeaderProps {
   storeId?: string;
   storeName?: string;
   storeType?: 'SELF' | 'MERCHANT';
+  stores?: Store[];
+  onStoreChange?: (store: Store) => void;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -18,8 +21,18 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onReturnToAI,
   storeName,
   storeType,
+  stores = [],
+  onStoreChange,
 }) => {
   const storeTypeLabel = storeType === 'SELF' ? '自营' : '商家';
+  const [showStoreDropdown, setShowStoreDropdown] = useState(false);
+
+  const handleStoreSelect = (store: Store) => {
+    if (onStoreChange) {
+      onStoreChange(store);
+    }
+    setShowStoreDropdown(false);
+  };
 
   return (
     <div
@@ -33,7 +46,108 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         alignItems: 'center',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* 左侧店铺切换 */}
+        {stores.length > 0 && (
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowStoreDropdown(!showStoreDropdown)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 12px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                borderRadius: '20px',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+              }}
+            >
+              <span>🏪</span>
+              <span style={{ maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {storeName || '选择店铺'}
+              </span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+
+            {/* 下拉菜单 */}
+            {showStoreDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                marginTop: '8px',
+                background: '#fff',
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                minWidth: '160px',
+                zIndex: 100,
+                overflow: 'hidden',
+                animation: 'fadeIn 0.2s ease',
+              }}>
+                {stores.map(store => (
+                  <button
+                    key={store.id}
+                    onClick={() => handleStoreSelect(store)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: store.name === storeName ? 'linear-gradient(135deg, #f0f5ff 0%, #f5f0ff 100%)' : '#fff',
+                      border: 'none',
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease',
+                      borderBottom: '1px solid #f0f0f0',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (store.name !== storeName) {
+                        e.currentTarget.style.background = '#f5f5f5';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (store.name !== storeName) {
+                        e.currentTarget.style.background = '#fff';
+                      }
+                    }}
+                  >
+                    <span>🏪</span>
+                    <span style={{ flex: 1, fontSize: '13px', color: '#333' }}>
+                      {store.name}
+                    </span>
+                    <span style={{
+                      padding: '2px 6px',
+                      background: store.storeType === 'SELF' ? '#52c41a' : '#fa8c16',
+                      borderRadius: '8px',
+                      fontSize: '10px',
+                      color: '#fff',
+                    }}>
+                      {store.storeType === 'SELF' ? '自营' : '商家'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 客服图标 */}
         <div
           style={{
@@ -62,7 +176,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       </div>
 
       {/* 店铺信息 */}
-      {storeName && (
+      {storeName && stores.length === 0 && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -124,6 +238,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           </button>
         )}
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };

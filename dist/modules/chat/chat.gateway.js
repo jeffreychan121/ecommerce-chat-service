@@ -16,13 +16,36 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const common_1 = require("@nestjs/common");
+const event_emitter_1 = require("@nestjs/event-emitter");
 const socket_io_1 = require("socket.io");
 const chat_service_1 = require("./chat.service");
+const handoff_service_1 = require("../handoff/handoff.service");
 let ChatGateway = ChatGateway_1 = class ChatGateway {
-    constructor(chatService) {
+    constructor(chatService, eventEmitter, handoffService) {
         this.chatService = chatService;
+        this.eventEmitter = eventEmitter;
+        this.handoffService = handoffService;
         this.logger = new common_1.Logger(ChatGateway_1.name);
         this.sessionClients = new Map();
+        this.eventEmitter.on('order.created', (order) => {
+            this.logger.log(`Broadcasting order created: ${order.orderNo}`);
+            this.server.emit('order-created', order);
+        });
+        this.eventEmitter.on('agent.message', (data) => {
+            this.logger.log(`Broadcasting agent message to session: ${data.sessionId}`);
+            this.server.to(data.sessionId).emit('agent-message', data.message);
+        });
+        this.eventEmitter.on('customer.message', (data) => {
+            this.logger.log(`Broadcasting customer message to agents: ${data.sessionId}`);
+            this.server.emit('customer-message', {
+                sessionId: data.sessionId,
+                ...data.message,
+            });
+        });
+    }
+    async broadcastQueueUpdate() {
+        const queue = await this.handoffService.getPendingQueue();
+        this.server.emit('handoff-queue-update', queue);
     }
     handleConnection(client) {
         this.logger.log(`Client connected: ${client.id}`);
@@ -45,6 +68,7 @@ let ChatGateway = ChatGateway_1 = class ChatGateway {
             this.logger.error(`Session not found: ${sessionId}`);
             return { success: false, error: 'Session not found' };
         }
+        await client.join(sessionId);
         if (!this.sessionClients.has(sessionId)) {
             this.sessionClients.set(sessionId, new Set());
         }
@@ -53,6 +77,7 @@ let ChatGateway = ChatGateway_1 = class ChatGateway {
     }
     handleLeaveSession(client, sessionId) {
         this.logger.log(`Client ${client.id} leaving session: ${sessionId}`);
+        client.leave(sessionId);
         const clients = this.sessionClients.get(sessionId);
         if (clients) {
             clients.delete(client.id);
@@ -128,6 +153,8 @@ exports.ChatGateway = ChatGateway = ChatGateway_1 = __decorate([
         cors: { origin: '*' },
         path: '/ws/chat',
     }),
-    __metadata("design:paramtypes", [chat_service_1.ChatService])
+    __metadata("design:paramtypes", [chat_service_1.ChatService,
+        event_emitter_1.EventEmitter2,
+        handoff_service_1.HandoffService])
 ], ChatGateway);
 //# sourceMappingURL=chat.gateway.js.map

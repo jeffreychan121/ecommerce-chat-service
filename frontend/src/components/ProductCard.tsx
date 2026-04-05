@@ -6,6 +6,7 @@ interface Product {
   name: string;
   price: number;
   short_reason: string;
+  detail_url?: string;
 }
 
 interface ProductCardProps {
@@ -82,6 +83,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            marginTop: '8px',
           }}>
             <div style={{
               fontSize: '18px',
@@ -91,31 +93,53 @@ export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               ¥{product.price}
             </div>
 
-            <button
-              onClick={() => setShowPhoneModal(product)}
-              style={{
-                padding: '8px 16px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: 'none',
-                borderRadius: '20px',
-                color: '#fff',
-                fontSize: '13px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
-              }}
-            >
-              立即下单
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => window.open(product.detail_url || '#', '_blank')}
+                style={{
+                  padding: '6px 12px',
+                  background: '#fff',
+                  border: '1px solid #667eea',
+                  borderRadius: '16px',
+                  color: '#667eea',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f0f5ff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#fff';
+                }}
+              >
+                查看详情
+              </button>
+              <button
+                onClick={() => setShowPhoneModal(product)}
+                style={{
+                  padding: '6px 12px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none',
+                  borderRadius: '16px',
+                  color: '#fff',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                立即下单
+              </button>
+            </div>
           </div>
         </div>
       ))}

@@ -59,7 +59,47 @@ export class OrderService {
       await this.createLogistics(order.id, order.orderNo);
     }
 
-    return this.toOrderInfo(order);
+    return await this.toOrderInfo(order);
+  }
+
+  /**
+   * 从聊天创建订单（用于聊天下单功能）
+   */
+  async createOrderFromChat(
+    productName: string,
+    quantity: number,
+  ): Promise<OrderInfo> {
+    this.logger.log(`createOrderFromChat: productName=${productName}, quantity=${quantity}`);
+
+    // 生成订单号
+    const orderNo = this.generateOrderNo();
+
+    // 随机生成单价（10-500元）
+    const productPrice = Math.floor(Math.random() * 490) + 10;
+    const amount = productPrice * quantity;
+    const discountAmount = 0;
+    const actualAmount = amount;
+
+    // 创建订单，状态设为 PAID（跳过支付）
+    const order = await this.prisma.order.create({
+      data: {
+        orderNo,
+        status: OrderStatus.PAID, // 已支付
+        payStatus: PayStatus.PAID,
+        amount,
+        discountAmount,
+        actualAmount,
+        quantity,
+        productName,
+        productPrice,
+        paidAt: new Date(),
+      },
+    });
+
+    // 自动创建物流信息
+    await this.createLogistics(order.id, order.orderNo);
+
+    return await this.toOrderInfo(order);
   }
 
   /**
@@ -76,7 +116,7 @@ export class OrderService {
       throw new NotFoundException(`订单 ${orderNo} 不存在`);
     }
 
-    return this.toOrderInfo(order);
+    return await this.toOrderInfo(order);
   }
 
   /**
@@ -90,7 +130,7 @@ export class OrderService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return orders.map(order => this.toOrderInfo(order));
+    return Promise.all(orders.map(order => this.toOrderInfo(order)));
   }
 
   /**
@@ -173,9 +213,14 @@ export class OrderService {
   }
 
   /**
-   * 转换为 OrderInfo
+   * 转换为 OrderInfo（包含物流信息）
    */
-  private toOrderInfo(order: any): OrderInfo {
+  private async toOrderInfo(order: any): Promise<OrderInfo> {
+    // 查询物流信息
+    const logistics = await this.prisma.logistics.findUnique({
+      where: { orderId: order.id },
+    });
+
     return {
       orderNo: order.orderNo,
       status: order.status as OrderStatus,
@@ -184,7 +229,7 @@ export class OrderService {
       orderAmount: order.amount,
       discountAmount: order.discountAmount,
       actualAmount: order.actualAmount,
-      createdAt: order.createdAt.toISOString(),
+      createdAt: order.createdAt?.toISOString(),
       paidAt: order.paidAt?.toISOString(),
       shippedAt: order.shippedAt?.toISOString(),
       deliveredAt: order.deliveredAt?.toISOString(),
@@ -199,6 +244,12 @@ export class OrderService {
       shippingAddress: order.shippingAddress,
       receiverName: order.receiverName,
       receiverPhone: order.receiverPhone,
+      logistics: logistics ? {
+        carrier: logistics.carrier,
+        trackingNo: logistics.trackingNo,
+        status: logistics.status,
+        currentLocation: logistics.currentLocation,
+      } : undefined,
     };
   }
 

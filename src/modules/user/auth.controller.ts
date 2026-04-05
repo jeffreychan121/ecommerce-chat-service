@@ -11,23 +11,17 @@ export class AuthController {
   @Post('login')
   async login(@Body() body: { phone: string }) {
     this.logger.log(`Login request for phone: ${body.phone}`);
-    const user = await this.userService.findOrCreateByPhone(body.phone);
-    return {
-      userId: user.id,
-      phone: user.phone,
-    };
+    const result = await this.userService.findOrCreateWithStore(body.phone);
+    return result;
   }
 
   // 获取用户信息
   @Get('user/:phone')
   async getUserByPhone(@Body() body: { phone: string }) {
-    const user = await this.userService.findByPhone(body.phone);
-    if (!user) {
+    const result = await this.userService.findWithStore(body.phone);
+    if (!result) {
       return null;
     }
-    return {
-      userId: user.id,
-      phone: user.phone,
-    };
+    return result;
   }
 }

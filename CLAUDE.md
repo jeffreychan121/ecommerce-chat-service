@@ -49,12 +49,25 @@ npx prisma generate
 ### 启动项目
 
 ```bash
-# 终端1：启动后端 (http://localhost:3000)
-pnpm run start:dev
+# 每次修改代码后，需要重建并重启后端：
 
-# 终端2：启动前端 (http://localhost:5173)
-cd frontend && pnpm run dev
+# 后端：重建 + 启动 (热重载)
+cd /Users/chan/Henson/CS/mall-chat-service
+pnpm run build && pnpm run start:dev
+
+# 前端：直接运行 (Vite 热重载)
+cd /Users/chan/Henson/CS/mall-chat-service/frontend
+pnpm run dev
 ```
+
+### 修改代码后的重启流程
+
+由于 NestJS 需要重新编译，每次修改后端代码后必须：
+
+1. `pnpm run build` - 重建编译后的 JS
+2. `pnpm run start:dev` - 启动（或重启）开发服务器
+
+前端 Vite 有热重载，但修改后端后需要重建。
 
 ## 项目架构
 
@@ -260,3 +273,114 @@ store_type: configRef.current.storeType.toLowerCase() as 'self' | 'merchant',
 **问题**: `chat.css` 中出现重复的 CSS 代码块导致语法错误，样式不生效。
 
 **解决**: 定期检查 CSS 文件，确保没有重复的代码块。可以用构建工具的 CSS 校验功能。
+
+### 11. Dify API Token 区分
+
+**问题**: Dify 有两种 Token，API Token (dataset-xxx) 用于知识库操作，App Token (app-xxx) 用于聊天消息。
+
+**解决**: 在 DifyClient 中创建两个 axios 实例：
+
+```typescript
+// API Token client (for knowledge base operations)
+this.client = axios.create({
+  baseURL,
+  headers: { 'Authorization': `Bearer ${apiKey}` },  // dataset-xxx
+});
+
+// App Token client (for chat messages)
+this.appClient = axios.create({
+  baseURL,
+  headers: { 'Authorization': `Bearer ${appToken}` },  // app-xxx
+});
+```
+
+### 12. 商家知识库训练功能
+
+**功能**: 商家可上传文件(PDF/Word/Excel/MD)训练知识库
+
+**实现**:
+- 新增 TrainingJob 模型，存储文件路径和 Dify documentId
+- 支持创建/删除知识库
+- 支持启用/禁用文档（本地状态 + Dify API）
+- 训练状态：PENDING → PROCESSING → COMPLETED/FAILED
+
+**关键代码**:
+```typescript
+// 防止重复训练
+if (job.status === 'COMPLETED') {
+  throw new BadRequestException('文件已完成训练，请勿重复训练');
+}
+```
+
+### 13. AI 消息格式化工具
+
+**需求**: 将 AI 回复的 markdown 转换为干净的聊天文本
+
+**实现**: 新增 `frontend/src/utils/formatMessage.ts`
+
+**核心函数**:
+- `formatAssistantMessage(text)` - 移除 markdown 残留
+- `isTableFormat(text)` / `parseTable(text)` - 检测和解析表格
+- `isKeyValueFormat(text)` / `parseKeyValue(text)` - 属性-值格式
+
+**格式化处理**:
+- 移除代码围栏 ``` 和行内反引号 `
+- 移除加粗/斜体标记 **, __, *, _
+- 移除标题 # ##
+- 压缩连续空行
+
+**前端渲染**: MessageBubble 和 MerchantTraining 组件使用 AIMessageContent 组件渲染 AI 消息
+
+### 14. 表格格式检测
+
+**问题**: AI 返回的表格可能是 | 格式或空格分隔格式
+
+**解决**: 优先检查第一行是否包含 `|`
+
+```typescript
+const firstRow = lines[0];
+const usePipeFormat = firstRow.includes('|');
+```
+
+### 15. Dify create-by-text API
+
+**问题**: Dify 的 create-by-file API 有参数限制
+
+**解决**: 使用 create-by-text API 直接上传文本内容：
+
+```typescript
+// dify.client.ts
+async createDocument(datasetId: string, filePath: string) {
+  const fileContent = fs.readFileSync(filePath, 'utf-8');
+  const response = await this.client.post(
+    `/datasets/${datasetId}/document/create-by-text`,
+    { name: fileName, text: fileContent, indexing_technique: 'high_quality' }
+  );
+}
+```
+
+### 16. Prisma 数据库字段更新
+
+**场景**: 给已有模型添加新字段（如 TrainingJob 添加 enabled 字段）
+
+**步骤**:
+1. 修改 `prisma/schema.prisma` 添加字段
+2. 执行 `npx prisma generate` 生成客户端
+3. 执行 `npx prisma db push` 同步到数据库（开发环境）
+
+```prisma
+// schema.prisma
+model TrainingJob {
+  enabled Boolean @default(true)  // 新增字段
+}
+```
+
+### 17. 前端组件内联样式优先级
+
+**问题**: 修改 React 内联样式后样式不生效
+
+**排查**:
+1. 检查 build 是否成功（无编译错误）
+2. 检查热更新是否生效
+3. 清除浏览器缓存或强制刷新
+4. 检查样式是否被其他规则覆盖

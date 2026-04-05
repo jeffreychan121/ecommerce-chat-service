@@ -72,7 +72,7 @@ let MerchantService = MerchantService_1 = class MerchantService {
             fileCount: await this.prisma.trainingJob.count({ where: { storeId } }),
         };
     }
-    async createDatasetForStore(storeId) {
+    async createDatasetForStore(storeId, options) {
         const store = await this.storeService.findById(storeId);
         if (!store) {
             throw new common_1.BadRequestException('店铺不存在');
@@ -80,10 +80,39 @@ let MerchantService = MerchantService_1 = class MerchantService {
         if (store.difyDatasetId) {
             return { datasetId: store.difyDatasetId };
         }
-        const dataset = await this.difyService.createDataset(`Store-${store.name}`, `商家知识库 - ${store.name}`);
+        const name = options?.name || `${store.name} 知识库`;
+        const description = options?.description || `商家 ${store.name} 的知识库`;
+        const dataset = await this.difyService.createDataset({
+            name,
+            description,
+            indexing_technique: options?.indexing_technique || 'high_quality',
+            permission: options?.permission || 'only_me',
+            retrieval_model: {
+                search_method: options?.search_method || 'semantic_search',
+                top_k: options?.top_k || 2,
+                reranking_enable: false,
+                score_threshold_enabled: options?.score_threshold_enabled || false,
+                score_threshold: options?.score_threshold || 0,
+            },
+            doc_form: options?.doc_form || 'text_model',
+        });
         await this.storeService.update(storeId, { difyDatasetId: dataset.id });
         this.logger.log(`为店铺 ${store.name} 创建知识库: ${dataset.id}`);
         return { datasetId: dataset.id };
+    }
+    async deleteDataset(storeId) {
+        const store = await this.storeService.findById(storeId);
+        if (!store) {
+            throw new common_1.BadRequestException('店铺不存在');
+        }
+        if (!store.difyDatasetId) {
+            throw new common_1.BadRequestException('该店铺没有知识库');
+        }
+        await this.difyService.deleteDataset(store.difyDatasetId);
+        await this.storeService.update(storeId, { difyDatasetId: null });
+        await this.prisma.trainingJob.deleteMany({ where: { storeId } });
+        this.logger.log(`删除店铺 ${store.name} 的知识库: ${store.difyDatasetId}`);
+        return { success: true };
     }
     async uploadFile(storeId, file) {
         if (!file) {
@@ -104,7 +133,7 @@ let MerchantService = MerchantService_1 = class MerchantService {
             data: {
                 storeId,
                 fileName: file.originalname,
-                filePath: file.path,
+                filePath: path.resolve(file.path),
                 status: 'PENDING',
             },
         });
@@ -126,11 +155,22 @@ let MerchantService = MerchantService_1 = class MerchantService {
         if (!job) {
             throw new common_1.BadRequestException('文件不存在');
         }
+        const store = await this.storeService.findById(job.storeId);
         try {
-            await fs.promises.unlink(job.filePath);
+            const absoluteFilePath = path.resolve(process.cwd(), job.filePath);
+            await fs.promises.unlink(absoluteFilePath);
         }
         catch (e) {
             this.logger.warn(`删除本地文件失败: ${job.filePath}`);
+        }
+        if (store?.difyDatasetId && job.difyDocumentId) {
+            try {
+                await this.difyService.deleteDocument(store.difyDatasetId, job.difyDocumentId);
+                this.logger.log(`已删除 Dify 知识库中的文档: ${job.difyDocumentId}`);
+            }
+            catch (e) {
+                this.logger.warn(`删除 Dify 文档失败: ${e.message}`);
+            }
         }
         await this.prisma.trainingJob.delete({ where: { id: jobId } });
         return { success: true };
@@ -140,19 +180,31 @@ let MerchantService = MerchantService_1 = class MerchantService {
         if (!job) {
             throw new common_1.BadRequestException('文件不存在');
         }
+        if (job.status === 'COMPLETED') {
+            throw new common_1.BadRequestException('文件已完成训练，请勿重复训练');
+        }
+        if (job.status === 'PROCESSING') {
+            throw new common_1.BadRequestException('文件正在训练中，请稍后再试');
+        }
         const store = await this.storeService.findById(job.storeId);
         if (!store || !store.difyDatasetId) {
             throw new common_1.BadRequestException('店铺未配置知识库');
         }
+        const absoluteFilePath = path.resolve(process.cwd(), job.filePath);
+        this.logger.log(`训练文件: ${absoluteFilePath}`);
         await this.prisma.trainingJob.update({
             where: { id: jobId },
             data: { status: 'PROCESSING' },
         });
         try {
-            await this.difyService.createDocument(store.difyDatasetId, job.filePath);
+            const result = await this.difyService.createDocument(store.difyDatasetId, absoluteFilePath);
             await this.prisma.trainingJob.update({
                 where: { id: jobId },
-                data: { status: 'COMPLETED', completedAt: new Date() },
+                data: {
+                    status: 'COMPLETED',
+                    completedAt: new Date(),
+                    difyDocumentId: result.documentId,
+                },
             });
             return { success: true, status: 'COMPLETED' };
         }
@@ -179,6 +231,35 @@ let MerchantService = MerchantService_1 = class MerchantService {
             }
         }
         return results;
+    }
+    async toggleDocumentEnabled(jobId, enabled) {
+        const job = await this.prisma.trainingJob.findUnique({ where: { id: jobId } });
+        if (!job) {
+            throw new common_1.BadRequestException('文件不存在');
+        }
+        const store = await this.storeService.findById(job.storeId);
+        if (!store || !store.difyDatasetId) {
+            throw new common_1.BadRequestException('店铺未配置知识库');
+        }
+        if (!job.difyDocumentId) {
+            throw new common_1.BadRequestException('文件未训练，无法切换状态');
+        }
+        try {
+            if (enabled) {
+                await this.difyService.enableDocument(store.difyDatasetId, job.difyDocumentId);
+            }
+            else {
+                await this.difyService.disableDocument(store.difyDatasetId, job.difyDocumentId);
+            }
+        }
+        catch (error) {
+            this.logger.warn(`切换文档启用状态失败: ${error.message}，仅更新本地状态`);
+        }
+        await this.prisma.trainingJob.update({
+            where: { id: jobId },
+            data: { enabled },
+        });
+        return { success: true, enabled };
     }
     async chat(storeId, query) {
         const store = await this.storeService.findById(storeId);

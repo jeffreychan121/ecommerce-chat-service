@@ -47,7 +47,31 @@ let OrderService = OrderService_1 = class OrderService {
         if (order.status === order_types_1.OrderStatus.PAID || order.status === order_types_1.OrderStatus.TO_BE_SHIPPED) {
             await this.createLogistics(order.id, order.orderNo);
         }
-        return this.toOrderInfo(order);
+        return await this.toOrderInfo(order);
+    }
+    async createOrderFromChat(productName, quantity) {
+        this.logger.log(`createOrderFromChat: productName=${productName}, quantity=${quantity}`);
+        const orderNo = this.generateOrderNo();
+        const productPrice = Math.floor(Math.random() * 490) + 10;
+        const amount = productPrice * quantity;
+        const discountAmount = 0;
+        const actualAmount = amount;
+        const order = await this.prisma.order.create({
+            data: {
+                orderNo,
+                status: order_types_1.OrderStatus.PAID,
+                payStatus: order_types_1.PayStatus.PAID,
+                amount,
+                discountAmount,
+                actualAmount,
+                quantity,
+                productName,
+                productPrice,
+                paidAt: new Date(),
+            },
+        });
+        await this.createLogistics(order.id, order.orderNo);
+        return await this.toOrderInfo(order);
     }
     async getOrderStatus(orderNo) {
         this.logger.log(`getOrderStatus: orderNo=${orderNo}`);
@@ -57,7 +81,7 @@ let OrderService = OrderService_1 = class OrderService {
         if (!order) {
             throw new common_1.NotFoundException(`订单 ${orderNo} 不存在`);
         }
-        return this.toOrderInfo(order);
+        return await this.toOrderInfo(order);
     }
     async getOrders(limit = 20) {
         this.logger.log(`getOrders: limit=${limit}`);
@@ -65,7 +89,7 @@ let OrderService = OrderService_1 = class OrderService {
             take: limit,
             orderBy: { createdAt: 'desc' },
         });
-        return orders.map(order => this.toOrderInfo(order));
+        return Promise.all(orders.map(order => this.toOrderInfo(order)));
     }
     async getLogistics(orderNo) {
         this.logger.log(`getLogistics: orderNo=${orderNo}`);
@@ -128,7 +152,10 @@ let OrderService = OrderService_1 = class OrderService {
             },
         });
     }
-    toOrderInfo(order) {
+    async toOrderInfo(order) {
+        const logistics = await this.prisma.logistics.findUnique({
+            where: { orderId: order.id },
+        });
         return {
             orderNo: order.orderNo,
             status: order.status,
@@ -137,7 +164,7 @@ let OrderService = OrderService_1 = class OrderService {
             orderAmount: order.amount,
             discountAmount: order.discountAmount,
             actualAmount: order.actualAmount,
-            createdAt: order.createdAt.toISOString(),
+            createdAt: order.createdAt?.toISOString(),
             paidAt: order.paidAt?.toISOString(),
             shippedAt: order.shippedAt?.toISOString(),
             deliveredAt: order.deliveredAt?.toISOString(),
@@ -152,6 +179,12 @@ let OrderService = OrderService_1 = class OrderService {
             shippingAddress: order.shippingAddress,
             receiverName: order.receiverName,
             receiverPhone: order.receiverPhone,
+            logistics: logistics ? {
+                carrier: logistics.carrier,
+                trackingNo: logistics.trackingNo,
+                status: logistics.status,
+                currentLocation: logistics.currentLocation,
+            } : undefined,
         };
     }
     getStatusText(status) {

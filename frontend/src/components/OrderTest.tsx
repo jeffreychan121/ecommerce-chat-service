@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createOrder, getOrders, OrderInfo } from '../services/api';
+import { io, Socket } from 'socket.io-client';
 
 // 物流信息类型
 interface LogisticsInfo {
@@ -25,6 +26,7 @@ const OrderTest: React.FC = () => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [logistics, setLogistics] = useState<LogisticsInfo | null>(null);
   const [logisticsLoading, setLogisticsLoading] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
 
   // 加载订单列表
   const loadOrders = async () => {
@@ -42,6 +44,21 @@ const OrderTest: React.FC = () => {
 
   useEffect(() => {
     loadOrders();
+
+    // 连接 WebSocket 监听订单创建事件
+    socketRef.current = io('http://localhost:3000', {
+      path: '/ws/chat',
+      transports: ['websocket'],
+    });
+
+    socketRef.current.on('order-created', (newOrder: OrderInfo) => {
+      console.log('[OrderTest] 收到新订单:', newOrder);
+      setOrders(prev => [newOrder, ...prev]);
+    });
+
+    return () => {
+      socketRef.current?.disconnect();
+    };
   }, []);
 
   // 加载物流信息

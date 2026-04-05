@@ -48,7 +48,6 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ onSelectSession, onBack
   }, [activeTab]);
 
   useEffect(() => {
-    // WebSocket 监听队列更新
     const socket: Socket = io('http://localhost:3000', { path: '/ws/chat' });
     socket.on('handoff-queue-update', (data: QueueItem[]) => {
       setQueue(data);
@@ -98,6 +97,21 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ onSelectSession, onBack
     onSelectSession(sessionId);
   };
 
+  const formatTime = (dateStr: string) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return '刚刚';
+    if (minutes < 60) return `${minutes}分钟前`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}小时前`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}天前`;
+    return date.toLocaleDateString('zh-CN');
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -105,246 +119,383 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({ onSelectSession, onBack
       left: 0,
       right: 0,
       bottom: 0,
-      background: '#f5f5f5',
+      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
       zIndex: 3000,
       overflow: 'auto',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     }}>
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: '20px',
+        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%)',
+        padding: '24px 32px',
         color: '#fff',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
       }}>
-        <h2 style={{ margin: 0 }}>客服工作台</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '24px',
+            boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+          }}>
+            💬
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 600 }}>客服工作台</h2>
+            <div style={{ fontSize: '13px', opacity: 0.8, marginTop: '4px' }}>
+              {activeTab === 'pending' ? `待处理 ${queue.length} 个会话` : `历史会话 ${history.length} 条`}
+            </div>
+          </div>
+        </div>
         <button
           onClick={onBack}
           style={{
-            padding: '8px 16px',
-            background: 'rgba(255,255,255,0.2)',
-            border: '1px solid rgba(255,255,255,0.5)',
-            borderRadius: '4px',
+            padding: '10px 20px',
+            background: 'rgba(255,255,255,0.15)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            borderRadius: '8px',
             color: '#fff',
             cursor: 'pointer',
+            fontSize: '14px',
+            backdropFilter: 'blur(10px)',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.25)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
           }}
         >
-          返回
+          ← 返回
         </button>
       </div>
 
       {/* Tab */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #eee', background: '#fff' }}>
+      <div style={{
+        display: 'flex',
+        padding: '20px 32px',
+        gap: '12px',
+      }}>
         <button
           onClick={() => setActiveTab('pending')}
           style={{
-            padding: '14px 24px',
+            padding: '12px 24px',
             border: 'none',
-            background: activeTab === 'pending' ? '#1677ff' : 'transparent',
-            color: activeTab === 'pending' ? '#fff' : '#666',
+            background: activeTab === 'pending'
+              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              : 'rgba(255,255,255,0.1)',
+            color: '#fff',
             cursor: 'pointer',
             fontSize: '15px',
-            fontWeight: activeTab === 'pending' ? 'bold' : 'normal',
+            fontWeight: activeTab === 'pending' ? 600 : 400,
+            borderRadius: '10px',
+            transition: 'all 0.3s ease',
+            boxShadow: activeTab === 'pending' ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
           }}
         >
-          待处理 ({queue.length})
+          <span style={{ marginRight: '8px' }}>📥</span>
+          待处理
+          <span style={{
+            marginLeft: '8px',
+            padding: '2px 8px',
+            background: activeTab === 'pending' ? 'rgba(255,255,255,0.2)' : 'rgba(102, 126, 234, 0.3)',
+            borderRadius: '12px',
+            fontSize: '13px',
+          }}>
+            {queue.length}
+          </span>
         </button>
         <button
           onClick={() => setActiveTab('history')}
           style={{
-            padding: '14px 24px',
+            padding: '12px 24px',
             border: 'none',
-            background: activeTab === 'history' ? '#1677ff' : 'transparent',
-            color: activeTab === 'history' ? '#fff' : '#666',
+            background: activeTab === 'history'
+              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              : 'rgba(255,255,255,0.1)',
+            color: '#fff',
             cursor: 'pointer',
             fontSize: '15px',
-            fontWeight: activeTab === 'history' ? 'bold' : 'normal',
+            fontWeight: activeTab === 'history' ? 600 : 400,
+            borderRadius: '10px',
+            transition: 'all 0.3s ease',
+            boxShadow: activeTab === 'history' ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
           }}
         >
+          <span style={{ marginRight: '8px' }}>📋</span>
           历史会话
         </button>
       </div>
 
       {/* Content */}
-      <div style={{ padding: '20px' }}>
-        <div style={{
-          background: '#fff',
-          borderRadius: '8px',
-          padding: '20px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        }}>
-          {activeTab === 'pending' ? (
-            // 待处理队列
-            <>
-              <h3 style={{ marginTop: 0, marginBottom: '16px' }}>
-                待处理队列 ({queue.length})
-              </h3>
-
-              {loading ? (
-                <p style={{ color: '#666' }}>加载中...</p>
-              ) : queue.length === 0 ? (
-                <p style={{ color: '#999', textAlign: 'center', padding: '40px' }}>
-                  暂无待处理会话
-                </p>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid #eee' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>排队号</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>用户手机</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>店铺</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>最后消息</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>转人工时间</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {queue.map(item => (
-                      <tr key={item.ticketId} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '4px 8px',
-                            background: '#fff7e6',
-                            color: '#fa8c16',
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
-                          }}>
-                            #{item.queueNo}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px', color: '#333' }}>{item.userPhone}</td>
-                        <td style={{ padding: '12px', color: '#333' }}>
-                          <span style={{
-                            padding: '2px 8px',
-                            background: item.storeType === 'SELF' ? '#e6f7ff' : '#f6ffed',
-                            color: item.storeType === 'SELF' ? '#1890ff' : '#52c41a',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                          }}>
-                            {item.storeName}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px', color: '#666', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {item.lastMessage || '-'}
-                        </td>
-                        <td style={{ padding: '12px', color: '#666' }}>
-                          {new Date(item.createdAt).toLocaleString('zh-CN')}
-                        </td>
-                        <td style={{ padding: '12px' }}>
-                          <button
-                            onClick={() => handleAccept(item.sessionId)}
-                            style={{
-                              padding: '6px 16px',
-                              background: '#1677ff',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '14px',
-                            }}
-                          >
-                            接入
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </>
+      <div style={{ padding: '0 32px 32px' }}>
+        {loading ? (
+          <div style={{
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '16px',
+            padding: '60px',
+            textAlign: 'center',
+            color: 'rgba(255,255,255,0.6)',
+          }}>
+            加载中...
+          </div>
+        ) : activeTab === 'pending' ? (
+          queue.length === 0 ? (
+            <div style={{
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '16px',
+              padding: '60px',
+              textAlign: 'center',
+              color: 'rgba(255,255,255,0.5)',
+              backdropFilter: 'blur(10px)',
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
+              <div style={{ fontSize: '18px' }}>暂无待处理会话</div>
+              <div style={{ fontSize: '14px', marginTop: '8px', opacity: 0.7 }}>客户提交转人工请求后会显示在这里</div>
+            </div>
           ) : (
-            // 历史会话
-            <>
-              <h3 style={{ marginTop: 0, marginBottom: '16px' }}>
-                历史会话 ({history.length})
-              </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {queue.map((item, index) => (
+                <div
+                  key={item.ticketId}
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    borderRadius: '16px',
+                    padding: '20px 24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    transition: 'all 0.2s ease',
+                    animation: `fadeIn 0.3s ease ${index * 0.05}s both`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  {/* 排队号 */}
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #fa8c16 0%, #faad14 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    color: '#fff',
+                    boxShadow: '0 4px 12px rgba(250, 140, 22, 0.3)',
+                  }}>
+                    {item.queueNo}
+                  </div>
 
-              {loading ? (
-                <p style={{ color: '#666' }}>加载中...</p>
-              ) : history.length === 0 ? (
-                <p style={{ color: '#999', textAlign: 'center', padding: '40px' }}>
-                  暂无历史会话
-                </p>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid #eee' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>排队号</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>用户手机</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>店铺</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>状态</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>接入时间</th>
-                      <th style={{ padding: '12px', textAlign: 'left', color: '#666' }}>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map(item => (
-                      <tr key={item.ticketId} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '4px 8px',
-                            background: '#f0f0f0',
-                            color: '#666',
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
-                          }}>
-                            #{item.queueNo}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px', color: '#333' }}>{item.userPhone}</td>
-                        <td style={{ padding: '12px', color: '#333' }}>
-                          <span style={{
-                            padding: '2px 8px',
-                            background: item.storeType === 'SELF' ? '#e6f7ff' : '#f6ffed',
-                            color: item.storeType === 'SELF' ? '#1890ff' : '#52c41a',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                          }}>
-                            {item.storeName}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            background: item.status === 'CLOSED' ? '#fff1f0' : '#f6ffed',
-                            color: item.status === 'CLOSED' ? '#cf1322' : '#52c41a',
-                          }}>
-                            {item.status === 'CLOSED' ? '已关闭' : '已接听'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px', color: '#666' }}>
-                          {item.agentJoinedAt ? new Date(item.agentJoinedAt).toLocaleString('zh-CN') : '-'}
-                        </td>
-                        <td style={{ padding: '12px' }}>
-                          <button
-                            onClick={() => handleViewHistory(item.sessionId)}
-                            style={{
-                              padding: '6px 16px',
-                              background: '#fff',
-                              color: '#1677ff',
-                              border: '1px solid #1677ff',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '14px',
-                            }}
-                          >
-                            查看
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </>
-          )}
-        </div>
+                  {/* 用户信息 */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
+                        {item.userPhone}
+                      </span>
+                      <span style={{
+                        padding: '2px 10px',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        background: item.storeType === 'SELF' ? 'rgba(24, 144, 255, 0.2)' : 'rgba(82, 196, 26, 0.2)',
+                        color: item.storeType === 'SELF' ? '#40a9ff' : '#73d13d',
+                      }}>
+                        {item.storeName}
+                      </span>
+                    </div>
+                    <div style={{
+                      fontSize: '13px',
+                      color: 'rgba(255,255,255,0.5)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}>
+                      <span>💬</span>
+                      <span style={{
+                        maxWidth: '300px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {item.lastMessage || '暂无消息'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 时间 */}
+                  <div style={{
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.5)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {formatTime(item.createdAt)}
+                  </div>
+
+                  {/* 操作 */}
+                  <button
+                    onClick={() => handleAccept(item.sessionId)}
+                    style={{
+                      padding: '10px 24px',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  >
+                    接入
+                  </button>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          history.length === 0 ? (
+            <div style={{
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '16px',
+              padding: '60px',
+              textAlign: 'center',
+              color: 'rgba(255,255,255,0.5)',
+              backdropFilter: 'blur(10px)',
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
+              <div style={{ fontSize: '18px' }}>暂无历史会话</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {history.map((item, index) => (
+                <div
+                  key={item.ticketId}
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    borderRadius: '16px',
+                    padding: '20px 24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    transition: 'all 0.2s ease',
+                    animation: `fadeIn 0.3s ease ${index * 0.05}s both`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                  }}
+                >
+                  {/* 头像 */}
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '12px',
+                    background: item.status === 'CLOSED'
+                      ? 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)'
+                      : 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                  }}>
+                    {item.status === 'CLOSED' ? '✓' : '💬'}
+                  </div>
+
+                  {/* 用户信息 */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>
+                        {item.userPhone}
+                      </span>
+                      <span style={{
+                        padding: '2px 10px',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        background: item.storeType === 'SELF' ? 'rgba(24, 144, 255, 0.2)' : 'rgba(82, 196, 26, 0.2)',
+                        color: item.storeType === 'SELF' ? '#40a9ff' : '#73d13d',
+                      }}>
+                        {item.storeName}
+                      </span>
+                      <span style={{
+                        padding: '2px 10px',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        background: item.status === 'CLOSED' ? 'rgba(255, 77, 79, 0.2)' : 'rgba(82, 196, 26, 0.2)',
+                        color: item.status === 'CLOSED' ? '#ff7875' : '#73d13d',
+                      }}>
+                        {item.status === 'CLOSED' ? '已关闭' : '已接听'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
+                      接入时间: {item.agentJoinedAt ? new Date(item.agentJoinedAt).toLocaleString('zh-CN') : '-'}
+                    </div>
+                  </div>
+
+                  {/* 操作 */}
+                  <button
+                    onClick={() => handleViewHistory(item.sessionId)}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'rgba(255,255,255,0.1)',
+                      color: '#fff',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                    }}
+                  >
+                    查看
+                  </button>
+                </div>
+              ))}
+            </div>
+          )
+        )}
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };

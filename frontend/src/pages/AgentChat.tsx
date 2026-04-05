@@ -111,9 +111,13 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
   };
 
   const getSenderStyle = (type: string): React.CSSProperties => {
-    if (type === 'USER') return { background: '#e6f7ff', alignSelf: 'flex-end' };
-    if (type === 'HUMAN') return { background: '#f6ffed', alignSelf: 'flex-start' };
-    return { background: '#fafafa', alignSelf: 'center' };
+    const isLeft = type === 'USER';
+    return {
+      background: isLeft ? 'rgba(24, 144, 255, 0.15)' : type === 'HUMAN' ? 'rgba(82, 196, 26, 0.15)' : 'rgba(139, 92, 246, 0.15)',
+      border: isLeft ? '1px solid rgba(24, 144, 255, 0.3)' : type === 'HUMAN' ? '1px solid rgba(82, 196, 26, 0.3)' : '1px solid rgba(139, 92, 246, 0.3)',
+      marginLeft: isLeft ? '0' : 'auto',
+      marginRight: isLeft ? 'auto' : '0',
+    };
   };
 
   return (
@@ -123,34 +127,40 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
       left: 0,
       right: 0,
       bottom: 0,
-      background: '#f5f5f5',
+      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
       zIndex: 3000,
       display: 'flex',
       flexDirection: 'column',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     }}>
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: '16px 20px',
+        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%)',
+        padding: '16px 24px',
         color: '#fff',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
       }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '18px' }}>会话详情</h2>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>会话详情</h2>
           <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>
             {storeInfo && (
               <span style={{
                 padding: '2px 8px',
-                background: storeInfo.storeType === 'SELF' ? 'rgba(24,144,255,0.2)' : 'rgba(82,196,26,0.2)',
+                background: storeInfo.storeType === 'SELF'
+                  ? 'rgba(24, 144, 255, 0.3)'
+                  : 'rgba(82, 196, 26, 0.3)',
                 borderRadius: '4px',
                 marginRight: '8px',
+                fontSize: '11px',
               }}>
                 {storeInfo.name}
               </span>
             )}
-            {userPhone && <span>用户: {userPhone}</span>}
+            {userPhone && <span style={{ opacity: 0.9 }}>用户: {userPhone}</span>}
           </div>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -158,24 +168,43 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
             onClick={onBack}
             style={{
               padding: '8px 16px',
-              background: 'rgba(255,255,255,0.2)',
-              border: '1px solid rgba(255,255,255,0.5)',
-              borderRadius: '4px',
+              background: 'rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '8px',
               color: '#fff',
               cursor: 'pointer',
+              fontSize: '13px',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.25)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
             }}
           >
-            返回队列
+            ← 返回队列
           </button>
           <button
             onClick={handleClose}
             style={{
               padding: '8px 16px',
-              background: '#ff4d4f',
+              background: 'linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%)',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: '8px',
               color: '#fff',
               cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 500,
+              boxShadow: '0 2px 8px rgba(255, 77, 79, 0.3)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
             }}
           >
             结束会话
@@ -187,37 +216,51 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
       <div style={{
         flex: 1,
         overflow: 'auto',
-        padding: '20px',
+        padding: '20px 24px',
       }}>
         <div style={{
-          background: '#fff',
-          borderRadius: '8px',
+          background: 'rgba(255,255,255,0.08)',
+          borderRadius: '16px',
           padding: '20px',
           minHeight: '100%',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.1)',
         }}>
           {loading ? (
-            <div style={{ textAlign: 'center', color: '#666', padding: '40px' }}>
+            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)', padding: '40px' }}>
               加载中...
             </div>
           ) : messages.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#999', padding: '40px' }}>
+            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', padding: '40px' }}>
               暂无消息记录
             </div>
           ) : (
-            messages.map(msg => (
-              <div key={msg.id} style={{ display: 'flex', marginBottom: '16px' }}>
+            messages.map((msg, index) => (
+              <div
+                key={msg.id}
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  marginBottom: '16px',
+                  animation: `fadeIn 0.3s ease ${index * 0.05}s both`,
+                }}
+              >
                 <div style={{
                   ...getSenderStyle(msg.senderType),
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                  maxWidth: '70%',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                  padding: '14px 18px',
+                  borderRadius: '16px',
+                  maxWidth: '75%',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 }}>
-                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                  <div style={{
+                    fontSize: '12px',
+                    color: msg.senderType === 'USER' ? '#1890ff' : msg.senderType === 'HUMAN' ? '#52c41a' : '#999',
+                    marginBottom: '6px',
+                    fontWeight: 500,
+                  }}>
                     {getSenderLabel(msg.senderType)}
                   </div>
-                  <div style={{ lineHeight: '1.5' }}>{msg.content}</div>
+                  <div style={{ lineHeight: '1.6', color: '#fff' }}>{msg.content}</div>
                 </div>
               </div>
             ))
@@ -228,15 +271,16 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
 
       {/* Input */}
       <div style={{
-        background: '#fff',
-        padding: '16px 20px',
-        borderTop: '1px solid #eee',
+        background: 'rgba(255,255,255,0.08)',
+        padding: '16px 24px',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        backdropFilter: 'blur(10px)',
       }}>
         {/* 快速回复按钮 */}
         <div style={{
           display: 'flex',
           gap: '8px',
-          marginBottom: '12px',
+          marginBottom: '14px',
           flexWrap: 'wrap',
         }}>
           {AGENT_QUICK_REPLIES.map((reply, index) => (
@@ -248,59 +292,94 @@ const AgentChat: React.FC<AgentChatProps> = ({ sessionId, onBack }) => {
                 setTimeout(() => handleSend(), 100);
               }}
               style={{
-                padding: '6px 12px',
-                background: '#f0f5ff',
-                color: '#1677ff',
-                border: '1px solid #d9e4ff',
-                borderRadius: '16px',
+                padding: '8px 14px',
+                background: 'rgba(102, 126, 234, 0.2)',
+                color: '#a5b4fc',
+                border: '1px solid rgba(102, 126, 234, 0.3)',
+                borderRadius: '20px',
                 fontSize: '12px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#e6f0ff';
+                e.currentTarget.style.background = 'rgba(102, 126, 234, 0.35)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#f0f5ff';
+                e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              {reply.length > 15 ? reply.slice(0, 15) + '...' : reply}
+              {reply.length > 12 ? reply.slice(0, 12) + '...' : reply}
             </button>
           ))}
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
           <input
+            className="agent-input"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
             placeholder="输入回复内容..."
             style={{
               flex: 1,
-              padding: '12px 16px',
-              borderRadius: '4px',
-              border: '1px solid #ddd',
+              padding: '14px 18px',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(0,0,0,0.2)',
+              color: '#fff',
               fontSize: '14px',
               outline: 'none',
+              transition: 'all 0.2s ease',
             }}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim()}
             style={{
-              padding: '12px 24px',
-              background: input.trim() ? '#1677ff' : '#ccc',
+              padding: '14px 28px',
+              background: input.trim()
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                : 'rgba(255,255,255,0.1)',
               color: '#fff',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: '12px',
               cursor: input.trim() ? 'pointer' : 'not-allowed',
               fontSize: '14px',
+              fontWeight: 500,
+              boxShadow: input.trim() ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (input.trim()) {
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
             }}
           >
             发送
           </button>
         </div>
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .agent-input::placeholder {
+          color: rgba(255,255,255,0.5);
+        }
+        .agent-input::-webkit-input-placeholder {
+          color: rgba(255,255,255,0.5);
+        }
+        .agent-input::-moz-placeholder {
+          color: rgba(255,255,255,0.5);
+        }
+      `}</style>
     </div>
   );
 };

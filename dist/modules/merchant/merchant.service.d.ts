@@ -26,8 +26,21 @@ export declare class MerchantService {
         datasetId: string;
         fileCount: number;
     }>;
-    createDatasetForStore(storeId: string): Promise<{
+    createDatasetForStore(storeId: string, options?: {
+        name?: string;
+        description?: string;
+        indexing_technique?: string;
+        permission?: string;
+        search_method?: string;
+        top_k?: number;
+        score_threshold_enabled?: boolean;
+        score_threshold?: number;
+        doc_form?: string;
+    }): Promise<{
         datasetId: string;
+    }>;
+    deleteDataset(storeId: string): Promise<{
+        success: boolean;
     }>;
     uploadFile(storeId: string, file: UploadedFile): Promise<{
         id: string;
@@ -42,6 +55,8 @@ export declare class MerchantService {
         createdAt: Date;
         fileName: string;
         filePath: string;
+        difyDocumentId: string | null;
+        enabled: boolean;
         errorMessage: string | null;
         completedAt: Date | null;
     }[]>;
@@ -53,6 +68,10 @@ export declare class MerchantService {
         status: string;
     }>;
     trainAllFiles(storeId: string): Promise<any[]>;
+    toggleDocumentEnabled(jobId: string, enabled: boolean): Promise<{
+        success: boolean;
+        enabled: boolean;
+    }>;
     chat(storeId: string, query: string): Promise<import("../dify/dto/dify.dto").DifyResponse>;
 }
 export {};

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface LoginPageProps {
-  onLogin: (userId: string, phone: string) => void;
+  onLogin: (userId: string, phone: string, storeId?: string, storeName?: string) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
@@ -26,12 +26,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     try {
       const { login } = await import('../services/api');
       const response = await login(phone);
+      console.log('[LoginPage] 登录响应:', response);
       // 保存登录信息到 localStorage
       localStorage.setItem('chat_user', JSON.stringify({
         userId: response.userId,
         phone: response.phone,
+        storeId: response.storeId,
+        storeName: response.storeName,
       }));
-      onLogin(response.userId, response.phone);
+      onLogin(response.userId, response.phone, response.storeId, response.storeName);
     } catch (e: any) {
       setError(e.response?.data?.message || '登录失败，请重试');
     } finally {

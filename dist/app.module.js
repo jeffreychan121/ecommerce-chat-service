@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const event_emitter_1 = require("@nestjs/event-emitter");
 const configuration_1 = __importDefault(require("./config/configuration"));
 const database_module_1 = require("./infra/database/database.module");
 const chat_module_1 = require("./modules/chat/chat.module");
@@ -25,6 +26,7 @@ const order_module_1 = require("./modules/order/order.module");
 const intent_router_module_1 = require("./modules/intent-router/intent-router.module");
 const agent_module_1 = require("./modules/agent/agent.module");
 const merchant_module_1 = require("./modules/merchant/merchant.module");
+const guide_module_1 = require("./modules/guide/guide.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -35,6 +37,7 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 load: [configuration_1.default],
             }),
+            event_emitter_1.EventEmitterModule.forRoot(),
             database_module_1.DatabaseModule,
             chat_module_1.ChatModule,
             session_module_1.SessionModule,
@@ -47,6 +50,7 @@ exports.AppModule = AppModule = __decorate([
             intent_router_module_1.IntentRouterModule,
             agent_module_1.AgentModule,
             merchant_module_1.MerchantModule,
+            guide_module_1.GuideModule,
         ],
     })
 ], AppModule);

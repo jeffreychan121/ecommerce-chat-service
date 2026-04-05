@@ -23,11 +23,20 @@ let DifyClient = DifyClient_1 = class DifyClient {
         this.logger = new common_1.Logger(DifyClient_1.name);
         const baseURL = this.configService.get('dify.baseUrl') || 'http://localhost/v1';
         const apiKey = this.configService.get('dify.apiKey') || '';
+        const appToken = this.configService.get('dify.appToken') || '';
         const timeout = this.configService.get('dify.timeout') || 30000;
         this.client = axios_1.default.create({
             baseURL,
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            timeout,
+        });
+        this.appClient = axios_1.default.create({
+            baseURL,
+            headers: {
+                'Authorization': `Bearer ${appToken}`,
                 'Content-Type': 'application/json',
             },
             timeout,
@@ -45,9 +54,9 @@ let DifyClient = DifyClient_1 = class DifyClient {
         if (conversationId) {
             requestBody.conversation_id = conversationId;
         }
-        this.logger.log(`Sending message to Dify: ${url}, conversationId: ${conversationId || 'new'}`);
+        this.logger.log(`[DifyClient] 请求: ${url}, conversationId=${conversationId || 'new'}`);
         try {
-            const response = await this.client.post(url, requestBody, {
+            const response = await this.appClient.post(url, requestBody, {
                 responseType: 'stream',
             });
             let messageId = '';
@@ -78,7 +87,7 @@ let DifyClient = DifyClient_1 = class DifyClient {
                     }
                 });
                 response.data.on('end', () => {
-                    this.logger.log('Dify stream completed');
+                    this.logger.log('[DifyClient] 流式响应完成');
                     resolve({
                         messageId,
                         conversationId: conversationIdResult,
@@ -86,40 +95,78 @@ let DifyClient = DifyClient_1 = class DifyClient {
                     });
                 });
                 response.data.on('error', (err) => {
-                    this.logger.error(`Dify stream error: ${err.message}`);
+                    this.logger.error(`[DifyClient] 流式响应错误: ${err.message}`);
                     reject(err);
                 });
             });
         }
         catch (error) {
-            this.logger.error(`Dify request failed: ${error.message}`);
+            this.logger.error(`[DifyClient] 请求失败: ${error.message}`);
             throw error;
         }
     }
-    async createDataset(name, description) {
-        const response = await this.client.post('/v1/datasets', {
-            name,
-            description: description || '',
-            indexing_technique: 'high_quality',
-            permission: 'only_me',
-        });
+    async createDataset(options) {
+        const requestBody = {
+            name: options.name,
+            description: options.description || '',
+            indexing_technique: options.indexing_technique || 'high_quality',
+            permission: options.permission || 'only_me',
+        };
+        if (options.retrieval_model) {
+            requestBody.retrieval_model = {
+                search_method: options.retrieval_model.search_method || 'semantic_search',
+                top_k: options.retrieval_model.top_k || 2,
+                reranking_enable: options.retrieval_model.reranking_enable || false,
+                score_threshold_enabled: options.retrieval_model.score_threshold_enabled || false,
+                score_threshold: options.retrieval_model.score_threshold || 0,
+            };
+        }
+        if (options.doc_form) {
+            requestBody.doc_form = options.doc_form;
+        }
+        const response = await this.client.post('/datasets', requestBody);
         return { id: response.data.id };
     }
     async createDocument(datasetId, filePath) {
-        const FormData = require('form-data');
         const fs = require('fs');
-        const form = new FormData();
-        form.append('file', fs.createReadStream(filePath));
-        form.append('indexing_technique', 'high_quality');
-        const response = await this.client.post(`/v1/datasets/${datasetId}/document/create-by-file`, form, { headers: { ...form.getHeaders() } });
-        return response.data;
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const fileName = filePath.split('/').pop() || 'document.txt';
+        const response = await this.client.post(`/datasets/${datasetId}/document/create-by-text`, {
+            name: fileName,
+            text: fileContent,
+            indexing_technique: 'high_quality',
+            process_rule: { mode: 'automatic' },
+        });
+        return {
+            document: response.data.document,
+            documentId: response.data.document.id,
+        };
     }
     async getDocuments(datasetId) {
-        const response = await this.client.get(`/v1/datasets/${datasetId}/documents`);
+        const response = await this.client.get(`/datasets/${datasetId}/documents`);
         return response.data;
     }
     async deleteDocument(datasetId, documentId) {
-        await this.client.delete(`/v1/datasets/${datasetId}/documents/${documentId}`);
+        await this.client.delete(`/datasets/${datasetId}/documents/${documentId}`);
+    }
+    async deleteDataset(datasetId) {
+        await this.client.delete(`/datasets/${datasetId}`);
+    }
+    async disableDocument(datasetId, documentId) {
+        try {
+            await this.client.post(`/datasets/${datasetId}/documents/${documentId}/disable`, {});
+        }
+        catch (error) {
+            this.logger.warn(`Dify disable document API failed: ${error.message}. Document will be marked as disabled locally.`);
+        }
+    }
+    async enableDocument(datasetId, documentId) {
+        try {
+            await this.client.post(`/datasets/${datasetId}/documents/${documentId}/enable`, {});
+        }
+        catch (error) {
+            this.logger.warn(`Dify enable document API failed: ${error.message}. Document will be marked as enabled locally.`);
+        }
     }
 };
 exports.DifyClient = DifyClient;

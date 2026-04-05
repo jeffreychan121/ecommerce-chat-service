@@ -24,8 +24,11 @@ let MerchantController = class MerchantController {
     async getStatus(storeId) {
         return this.merchantService.getStoreStatus(storeId);
     }
-    async createDataset(storeId) {
-        return this.merchantService.createDatasetForStore(storeId);
+    async createDataset(storeId, dto = {}) {
+        return this.merchantService.createDatasetForStore(storeId, dto);
+    }
+    async deleteDataset(storeId) {
+        return this.merchantService.deleteDataset(storeId);
     }
     async uploadFile(file, storeId) {
         return this.merchantService.uploadFile(storeId, file);
@@ -38,6 +41,12 @@ let MerchantController = class MerchantController {
     }
     async trainFile(jobId) {
         return this.merchantService.trainFile(jobId);
+    }
+    async enableFile(jobId) {
+        return this.merchantService.toggleDocumentEnabled(jobId, true);
+    }
+    async disableFile(jobId) {
+        return this.merchantService.toggleDocumentEnabled(jobId, false);
     }
     async trainAllFiles(storeId) {
         return this.merchantService.trainAllFiles(storeId);
@@ -57,10 +66,18 @@ __decorate([
 __decorate([
     (0, common_1.Post)('dataset/:storeId'),
     __param(0, (0, common_1.Param)('storeId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MerchantController.prototype, "createDataset", null);
+__decorate([
+    (0, common_1.Delete)('dataset/:storeId'),
+    __param(0, (0, common_1.Param)('storeId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], MerchantController.prototype, "createDataset", null);
+], MerchantController.prototype, "deleteDataset", null);
 __decorate([
     (0, common_1.Post)('files/upload'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', { dest: './uploads' })),
@@ -91,6 +108,20 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], MerchantController.prototype, "trainFile", null);
+__decorate([
+    (0, common_1.Post)('files/:jobId/enable'),
+    __param(0, (0, common_1.Param)('jobId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], MerchantController.prototype, "enableFile", null);
+__decorate([
+    (0, common_1.Post)('files/:jobId/disable'),
+    __param(0, (0, common_1.Param)('jobId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], MerchantController.prototype, "disableFile", null);
 __decorate([
     (0, common_1.Post)('files/:storeId/train-all'),
     __param(0, (0, common_1.Param)('storeId')),

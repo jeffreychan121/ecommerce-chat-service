@@ -290,8 +290,8 @@ const LeadManagement: React.FC<LeadManagementProps> = ({ storeId, onBack }) => {
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                       >
                         关闭
                       </button>
@@ -310,8 +310,8 @@ const LeadManagement: React.FC<LeadManagementProps> = ({ storeId, onBack }) => {
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
                       关闭
                     </button>

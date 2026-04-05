@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SessionService } from '../session/session.service';
 import { MessageService } from '../message/message.service';
 import { DifyService } from '../dify/dify.service';
@@ -24,8 +25,9 @@ export declare class ChatService {
     private orderService;
     private intentRouterService;
     private prisma;
+    private eventEmitter;
     private readonly logger;
-    constructor(sessionService: SessionService, messageService: MessageService, difyService: DifyService, handoffService: HandoffService, userService: UserService, storeService: StoreService, orderService: OrderService, intentRouterService: IntentRouterService, prisma: PrismaService);
+    constructor(sessionService: SessionService, messageService: MessageService, difyService: DifyService, handoffService: HandoffService, userService: UserService, storeService: StoreService, orderService: OrderService, intentRouterService: IntentRouterService, prisma: PrismaService, eventEmitter: EventEmitter2);
     createOrResumeSession(dto: CreateSessionDto): Promise<CreateOrResumeSessionResponseDto>;
     sendMessage(sessionId: string, dto: SendMessageDto, onChunk?: (chunk: DifyChunk) => void): Promise<{
         messageId: string;
@@ -34,6 +36,7 @@ export declare class ChatService {
     }>;
     private handleOrderQuery;
     private handleLogisticsQuery;
+    private handleOrderCreate;
     private handleAIQuery;
     private formatOrderResponse;
     private formatLogisticsResponse;

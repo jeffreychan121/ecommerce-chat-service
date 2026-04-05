@@ -3,15 +3,18 @@ import { Injectable, Logger } from '@nestjs/common';
 export enum BusinessIntent {
   ORDER_STATUS_QUERY = 'order_status_query',
   LOGISTICS_QUERY = 'logistics_query',
+  ORDER_CREATE = 'order_create',
   GENERAL_AI_QUERY = 'general_ai_query',
 }
 
 export interface IntentResult {
   intent: BusinessIntent;
-  orderNo?: string; // 从消息中提取的订单号
-  confidence: number; // 置信度 0-1
-  needMoreInfo: boolean; // 是否需要补充更多信息
-  promptForInfo?: string; // 需要补充什么信息
+  orderNo?: string;
+  productName?: string;
+  quantity?: number;
+  confidence: number;
+  needMoreInfo: boolean;
+  promptForInfo?: string;
 }
 
 @Injectable()
@@ -32,6 +35,17 @@ export class IntentRouterService {
     '何时送达', '什么时候到', '轨迹', '运单', '单号'
   ];
 
+  // 下单关键词
+  private readonly ORDER_CREATE_KEYWORDS = [
+    '购买', '订货', '下单', '买', '要', '订购', '订', '帮我要', '帮我买'
+  ];
+
+  // 下单匹配模式（量词必须精确匹配）
+  private readonly ORDER_CREATE_PATTERNS = [
+    /(\d+)(个|件|台|套)(.+)/,          // 买2个xxx, 买2件xxx
+    /(.+?)(\d+)(个|件|台|套)$/,        // xxx2个, xxx2件（产品名在前）
+  ];
+
   // 订单号匹配模式 - 支持多种格式
   // 例如: 订单123456, 订单号123456, ORD123456, 123456
   private readonly ORDER_NO_PATTERN = /(?:订单[号]?|#|ORD|DD)(\d{6,20})/gi;
@@ -48,7 +62,20 @@ export class IntentRouterService {
     const extractedOrderNo = this.extractOrderNo(normalizedMessage);
     this.logger.log(`Extracted orderNo: ${extractedOrderNo}`);
 
-    // 2. 检查是否匹配订单状态查询关键词
+    // 2. 检查是否匹配下单意图（在订单查询之前）
+    const orderCreateResult = this.matchOrderCreate(normalizedMessage);
+    if (orderCreateResult) {
+      this.logger.log(`Matched ORDER_CREATE: productName=${orderCreateResult.productName}, quantity=${orderCreateResult.quantity}`);
+      return {
+        intent: BusinessIntent.ORDER_CREATE,
+        productName: orderCreateResult.productName,
+        quantity: orderCreateResult.quantity,
+        confidence: 0.9,
+        needMoreInfo: false,
+      };
+    }
+
+    // 3. 检查是否匹配订单状态查询关键词
     const orderMatchScore = this.matchKeywords(normalizedMessage, this.ORDER_KEYWORDS);
     if (orderMatchScore > 0) {
       const needMoreInfo = !extractedOrderNo;
@@ -145,5 +172,46 @@ export class IntentRouterService {
     if (matchedCount === 1) return 0.6;
     if (matchedCount === 2) return 0.8;
     return Math.min(0.95, 0.6 + matchedCount * 0.1);
+  }
+
+  /**
+   * 匹配下单意图
+   * 返回产品名和数量，如果无法匹配则返回 null
+   */
+  private matchOrderCreate(message: string): { productName: string; quantity: number } | null {
+    // 检查关键词
+    const hasKeyword = this.ORDER_CREATE_KEYWORDS.some(k => message.includes(k));
+    if (!hasKeyword) return null;
+
+    // 匹配数量+产品名模式
+    for (const pattern of this.ORDER_CREATE_PATTERNS) {
+      const match = message.match(pattern);
+      if (match) {
+        let quantity: number;
+        let productName: string;
+
+        // 判断是哪种模式：数量在前还是产品名在前
+        if (/^\d+$/.test(match[1])) {
+          // 模式：数字在前，如 "买2个xxx"
+          // match[1]=数量, match[2]=量词, match[3]=产品名
+          quantity = parseInt(match[1], 10);
+          productName = match[3]?.trim() || '';
+        } else {
+          // 模式：产品名在前，如 "xxx2个"
+          // match[1]=产品名, match[2]=数量, match[3]=量词
+          productName = match[1]?.trim() || '';
+          quantity = parseInt(match[2], 10);
+        }
+
+        if (quantity && productName && quantity > 0) {
+          // 清理产品名，去除可能的量词残留
+          productName = productName.replace(/(个|件|台|套)$/, '').trim();
+          if (productName) {
+            return { productName, quantity };
+          }
+        }
+      }
+    }
+    return null;
   }
 }

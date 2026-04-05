@@ -112,12 +112,12 @@ function App() {
       </button>
       <button
         onClick={() => {
-          setShowAgentDashboard(true);
+          setShowLeadManagement(true);
         }}
         style={{
           position: 'fixed',
           top: '20px',
-          right: '250px',
+          right: '140px',
           padding: '10px 20px',
           background: 'rgba(255,255,255,0.2)',
           backdropFilter: 'blur(10px)',
@@ -140,7 +140,7 @@ function App() {
           e.currentTarget.style.transform = 'translateY(0)';
         }}
       >
-        客服工作台
+        留资管理
       </button>
       <button
         onClick={() => {
@@ -149,7 +149,7 @@ function App() {
         style={{
           position: 'fixed',
           top: '20px',
-          right: '130px',
+          right: '260px',
           padding: '10px 20px',
           background: 'rgba(255,255,255,0.2)',
           backdropFilter: 'blur(10px)',
@@ -176,12 +176,12 @@ function App() {
       </button>
       <button
         onClick={() => {
-          setShowLeadManagement(true);
+          setShowAgentDashboard(true);
         }}
         style={{
           position: 'fixed',
           top: '20px',
-          right: '240px',
+          right: '380px',
           padding: '10px 20px',
           background: 'rgba(255,255,255,0.2)',
           backdropFilter: 'blur(10px)',
@@ -204,7 +204,7 @@ function App() {
           e.currentTarget.style.transform = 'translateY(0)';
         }}
       >
-        留资管理
+        客服工作台
       </button>
       <MainPage
         userId={userInfo.userId}

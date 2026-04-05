@@ -85,7 +85,7 @@ export class HandoffService {
     return keywords.some((keyword) => lowerContent.includes(keyword));
   }
 
-  // 获取待处理队列
+  // 获取待处理队列（去重：相同手机号+店铺只显示一个）
   async getPendingQueue(): Promise<AgentQueueItem[]> {
     const tickets = await this.prisma.handoffTicket.findMany({
       where: { status: HandoffStatus.PENDING },
@@ -97,11 +97,22 @@ export class HandoffService {
       },
     });
 
+    // 按手机号+店铺分组，只保留最新的一个
+    const grouped = new Map<string, typeof tickets[0]>();
+    for (const ticket of tickets) {
+      const key = `${ticket.session.user.phone}-${ticket.session.storeId}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, ticket);
+      }
+    }
+
+    const uniqueTickets = Array.from(grouped.values());
+
     // 获取每个会话的最后一条消息
-    const sessionIds = tickets.map(t => t.sessionId);
+    const sessionIds = uniqueTickets.map(t => t.sessionId);
     const lastMessages = await this.getLastMessages(sessionIds);
 
-    return tickets.map(t => ({
+    return uniqueTickets.map(t => ({
       ticketId: t.id,
       queueNo: t.queueNo,
       sessionId: t.sessionId,
@@ -256,7 +267,7 @@ export class HandoffService {
     };
   }
 
-  // 获取历史会话
+  // 获取历史会话（去重：相同手机号+店铺只显示一个）
   async getHistory(page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -271,20 +282,29 @@ export class HandoffService {
           },
         },
         orderBy: { agentJoinedAt: 'desc' },
-        skip,
-        take: limit,
       }),
       this.prisma.handoffTicket.count({
         where: { status: { in: [HandoffStatus.ANSWERED, HandoffStatus.CLOSED] } },
       }),
     ]);
 
+    // 按手机号+店铺分组，只保留最新的一个
+    const grouped = new Map<string, typeof tickets[0]>();
+    for (const ticket of tickets) {
+      const key = `${ticket.session.user.phone}-${ticket.session.storeId}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, ticket);
+      }
+    }
+
+    const uniqueTickets = Array.from(grouped.values()).slice(skip, skip + limit);
+
     // 获取最后消息
-    const sessionIds = tickets.map(t => t.sessionId);
+    const sessionIds = uniqueTickets.map(t => t.sessionId);
     const lastMessages = await this.getLastMessages(sessionIds);
 
     return {
-      items: tickets.map(t => ({
+      items: uniqueTickets.map(t => ({
         ticketId: t.id,
         sessionId: t.sessionId,
         queueNo: t.queueNo,
@@ -298,7 +318,7 @@ export class HandoffService {
         closedAt: t.closedAt?.toISOString() || '',
         status: t.status,
       })),
-      total,
+      total: grouped.size,
       page,
       limit,
     };

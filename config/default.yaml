@@ -25,8 +25,10 @@ redis:
 dify:
   # Dify API base URL
   baseUrl: "${DIFY_BASE_URL}"
-  # Dify API key for authentication
+  # Dify API token (for knowledge base operations)
   apiKey: "${DIFY_API_KEY}"
+  # Dify App token (for chat messages)
+  appToken: "${DIFY_APP_TOKEN}"
   # Dify application ID
   appId: "${DIFY_APP_ID}"
   # Request timeout in milliseconds

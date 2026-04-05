@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { createSession, sendMessage, handoff, getMessages, updateSessionStatus, searchProducts } from '../services/api';
+import { createSession, sendMessage, handoff, getMessages, updateSessionStatus } from '../services/api';
 import type { CreateSessionRequest, SendMessageRequest } from '../types';
 import { formatAssistantMessage } from '../utils/formatMessage';
 
@@ -22,15 +22,10 @@ interface ChatMessage {
       name: string;
       price: number;
       short_reason: string;
+      detail_url: string;
     }>;
   };
 }
-
-// 商品推荐关键词
-const PRODUCT_KEYWORDS = [
-  '推荐', '有什么', '想买', '买什么', '电子产品', '手机', '电脑', '平板', '耳机', '手表',
-  'iPhone', 'MacBook', 'iPad', 'AirPods', 'Apple Watch', '有什么产品', '有什么推荐'
-];
 
 export interface UseChatOptions {
   initialConfig: CreateSessionRequest;
@@ -189,48 +184,8 @@ export function useChat(options: UseChatOptions): UseChatReturn {
       return;
     }
 
-    // 检查是否是商品推荐关键词
-    const isProductQuery = PRODUCT_KEYWORDS.some(keyword =>
-      content.toLowerCase().includes(keyword.toLowerCase())
-    );
-
-    // 如果是商品推荐，先调用 API 获取商品
-    if (isProductQuery) {
-      setIsLoading(true);
-      try {
-        const productResponse = await searchProducts(content, configRef.current.storeId);
-
-        if (productResponse.items && productResponse.items.length > 0) {
-          // 添加商品卡片消息
-          const productCardMessage: ChatMessage = {
-            type: 'card',
-            content: '为您推荐以下商品：',
-            position: 'left',
-            timestamp: Date.now(),
-            card: {
-              type: 'product',
-              products: productResponse.items,
-            },
-          };
-          setMessages((prev) => [...prev, productCardMessage]);
-        } else {
-          // 没有商品，返回 AI 回复
-          const aiMessage: ChatMessage = {
-            type: 'text',
-            content: '抱歉，暂未找到相关商品，请您换个关键词试试~',
-            position: 'left',
-            timestamp: Date.now(),
-          };
-          setMessages((prev) => [...prev, aiMessage]);
-        }
-        setIsLoading(false);
-        return;
-      } catch (error) {
-        console.error('商品搜索失败:', error);
-        // 搜索失败时继续走 AI 流程
-      }
-    }
-
+    // 所有消息都发送到 Dify，由 Dify 处理（包括商品推荐）
+    // Dify 通过 HTTP Request 节点调用 search-products API
     setIsLoading(true);
 
     try {
@@ -258,12 +213,36 @@ export function useChat(options: UseChatOptions): UseChatReturn {
 
       // 添加 AI 回复
       if (response.answer || response.message) {
-        const rawContent = response.answer || response.message || '';
+        let rawContent = response.answer || response.message || '';
+
+        // 尝试解析 Dify 返回的商品信息（JSON 格式）
+        let cardData = null;
+        try {
+          // 检查是否包含商品 JSON（格式如 {"type":"products", "items":[...]})
+          const jsonMatch = rawContent.match(/\{[\s\S]*"type"\s*:\s*"products"[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.type === 'products' && parsed.items && parsed.items.length > 0) {
+              cardData = parsed.items;
+              // 从内容中移除 JSON 部分，只显示文本
+              rawContent = rawContent.replace(jsonMatch[0], '').trim();
+            }
+          }
+        } catch (e) {
+          // 不是 JSON，继续作为普通文本处理
+        }
+
         const aiMessage: ChatMessage = {
-          type: 'text',
+          type: cardData ? 'card' : 'text',
           content: convertMarkdownToText(rawContent),
           position: 'left',
           timestamp: Date.now(),
+          ...(cardData && {
+            card: {
+              type: 'product',
+              products: cardData,
+            },
+          }),
         };
         setMessages((prev) => [...prev, aiMessage]);
       }

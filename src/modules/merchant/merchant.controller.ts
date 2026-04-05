@@ -32,10 +32,29 @@ export class MerchantController {
     return this.merchantService.getStoreStatus(storeId);
   }
 
-  // 创建知识库
+  // 创建知识库（支持自定义参数）
   @Post('dataset/:storeId')
-  async createDataset(@Param('storeId') storeId: string) {
-    return this.merchantService.createDatasetForStore(storeId);
+  async createDataset(
+    @Param('storeId') storeId: string,
+    @Body() dto: {
+      name?: string;
+      description?: string;
+      indexing_technique?: string;
+      permission?: string;
+      search_method?: string;
+      top_k?: number;
+      score_threshold_enabled?: boolean;
+      score_threshold?: number;
+      doc_form?: string;
+    } = {},
+  ) {
+    return this.merchantService.createDatasetForStore(storeId, dto);
+  }
+
+  // 删除知识库
+  @Delete('dataset/:storeId')
+  async deleteDataset(@Param('storeId') storeId: string) {
+    return this.merchantService.deleteDataset(storeId);
   }
 
   // 上传文件
@@ -64,6 +83,18 @@ export class MerchantController {
   @Post('files/:jobId/train')
   async trainFile(@Param('jobId') jobId: string) {
     return this.merchantService.trainFile(jobId);
+  }
+
+  // 启用文档
+  @Post('files/:jobId/enable')
+  async enableFile(@Param('jobId') jobId: string) {
+    return this.merchantService.toggleDocumentEnabled(jobId, true);
+  }
+
+  // 禁用文档
+  @Post('files/:jobId/disable')
+  async disableFile(@Param('jobId') jobId: string) {
+    return this.merchantService.toggleDocumentEnabled(jobId, false);
   }
 
   // 训练所有文件

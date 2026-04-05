@@ -19,13 +19,14 @@ let DifyService = DifyService_1 = class DifyService {
         this.logger = new common_1.Logger(DifyService_1.name);
     }
     async sendMessage(conversationId, dto, onChunk) {
-        this.logger.log(`>>> [DifyService] 发送消息到Dify. Conversation: ${conversationId || 'new'}, Query: ${dto.query}, Inputs: ${JSON.stringify(dto.inputs)}`);
+        this.logger.log(`[DifyService] >>> 发送消息: query="${dto.query}", conversationId=${conversationId || 'new'}`);
         const defaultHandler = (chunk) => {
-            this.logger.debug(`>>> [DifyService] Dify chunk: ${chunk.event}`);
+            this.logger.debug(`[DifyService] chunk: ${chunk.event}`);
         };
         try {
             const result = await this.difyClient.sendMessage(conversationId, dto.inputs || {}, dto.query, onChunk || defaultHandler);
-            this.logger.log(`Dify response received. MessageId: ${result.messageId}, Answer length: ${result.answer.length}`);
+            this.logger.log(`[DifyService] <<< 响应: messageId=${result.messageId}, answer长度=${result.answer.length}`);
+            this.logger.log(`[DifyService] <<< 响应内容: ${result.answer}`);
             return result;
         }
         catch (error) {
@@ -36,8 +37,8 @@ let DifyService = DifyService_1 = class DifyService {
     async sendMessageWithInputs(conversationId, query, inputs, onChunk) {
         return this.sendMessage(conversationId, { query, inputs }, onChunk);
     }
-    async createDataset(name, description) {
-        return this.difyClient.createDataset(name, description);
+    async createDataset(options) {
+        return this.difyClient.createDataset(options);
     }
     async createDocument(datasetId, filePath) {
         return this.difyClient.createDocument(datasetId, filePath);
@@ -47,6 +48,15 @@ let DifyService = DifyService_1 = class DifyService {
     }
     async deleteDocument(datasetId, documentId) {
         return this.difyClient.deleteDocument(datasetId, documentId);
+    }
+    async deleteDataset(datasetId) {
+        return this.difyClient.deleteDataset(datasetId);
+    }
+    async disableDocument(datasetId, documentId) {
+        return this.difyClient.disableDocument(datasetId, documentId);
+    }
+    async enableDocument(datasetId, documentId) {
+        return this.difyClient.enableDocument(datasetId, documentId);
     }
 };
 exports.DifyService = DifyService;

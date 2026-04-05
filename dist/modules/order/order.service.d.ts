@@ -14,6 +14,7 @@ export declare class OrderService {
         receiverName: string;
         receiverPhone: string;
     }): Promise<OrderInfo>;
+    createOrderFromChat(productName: string, quantity: number): Promise<OrderInfo>;
     getOrderStatus(orderNo: string): Promise<OrderInfo>;
     getOrders(limit?: number): Promise<OrderInfo[]>;
     getLogistics(orderNo: string): Promise<LogisticsInfo>;

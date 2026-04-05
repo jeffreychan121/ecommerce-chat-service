@@ -1,0 +1,519 @@
+# LULUFULO Platform FAQ for Dify
+
+This file is optimized for Dify knowledge import.
+- One canonical FAQ chunk per section
+- Duplicate questions merged into aliases
+- Stable delimiter: `### FAQ-`
+- Categories preserved for retrieval
+
+### FAQ-001 | Category: Payments
+Canonical Question: What payment methods are accepted on LULUFULO ?
+Keywords: payment, methods, accepted, lulufulo, accepts, following, ecocash, zimswitch, visa, mastercard, pay, store.
+Answer:
+LULUFULO accepts the following payment methods: EcoCash, ZimSwitch, Visa, Mastercard, and Pay in store. You can choose the option that best suits your needs at checkout.
+
+### FAQ-002 | Category: Payments
+Canonical Question: Can I pay on cash?
+Keywords: pay, cash, yes, lulufulo, supports, payments, through, store, option., use, this, method
+Answer:
+Yes, LULUFULO supports cash payments through our “Pay in store” option.
+To use this method:
+1.At checkout, select “Pay in store” as your payment method.
+2.Complete your order without making an online payment.
+3.Visit the designated collection store and pay the full amount in cash when you collect your order.
+Please note: Your order will only be reserved for a limited time. If you do not collect and pay within the specified window, the order may be automatically cancelled.
+
+### FAQ-003 | Category: Payments
+Canonical Question: How secure is my payment information on LULUFULO ?
+Keywords: secure, payment, information, lulufulo, places, great, importance, personal, security, employ, industry-standard, measures
+Answer:
+LULUFULO places great importance on your personal information and payment security, and we employ industry-standard security measures to protect your data. For more information, please refer to our Terms and Conditions & Privacy Policy & Payment Policy or contact customer service
+
+### FAQ-004 | Category: Payments
+Canonical Question: What do l do if my payment is declined?
+Alternate Questions:
+- My payment failed - what can l do?
+Keywords: payment, declined, failed, check, following, resolve, issue, spelling, billing, information, entered, accuracy.
+Answer:
+If your payment is declined, you can check the following to resolve the issue:
+• Check the spelling and billing information you entered for accuracy.
+• Ensure that your credit card has sufficient funds or that your bank account has enough balance.
+• Check if there are any restrictions on your card, such as a daily spending limit.
+• Make sure your card has not expired.
+Note: It is recommended to keep the details of the error message that appeared during the declined transaction to provide it to our customer service for a faster resolution.
+
+### FAQ-005 | Category: Payments
+Canonical Question: What should I do if my payment fails?
+Keywords: should, payment, fails, fail, please, contact, customer, service, directly., support, team, will
+Answer:
+Should your payment fail, please contact Customer Service directly. Our support team will assist you promptly.
+
+### FAQ-006 | Category: Payments
+Canonical Question: Cash on delivery not available, Why?
+Keywords: cash, delivery, not, available, why, sincerely, apologise, inconvenience, currently, lulufulo., understand, this
+Answer:
+We sincerely apologise for the inconvenience—cash on delivery is currently not available on LULUFULO. We understand this may affect your shopping experience, and we’re actively exploring ways to introduce more convenient payment options in the future. In the meantime, please feel free to use any of our supported payment methods, or contact our customer support team if you need assistance.
+
+### FAQ-007 | Category: Payments
+Canonical Question: How do l know if my payment has been processed successfully?
+Keywords: know, payment, has, been, processed, successfully, confirm, whether, please, follow, these, steps
+Answer:
+To confirm whether your payment has been processed successfully, please follow these steps:
+1.Open the LULUFULO app and log in to your account.
+2.Go to “Account” → “My Orders”.
+3.Locate your order and check its current status.
+If you encounter any issues or see an unexpected status, please contact our customer support team for assistance.
+
+### FAQ-008 | Category: Payments
+Canonical Question: How long does it take for my payment to be processed?
+Keywords: long, does, take, payment, processed, instantly, time, purchase., once, confirmed, order, activated
+Answer:
+Your payment is processed instantly at the time of purchase. Once your payment is confirmed, the order is activated immediately, and the seller will arrange dispatch as soon as possible.
+
+If your payment has been made but the order hasn't been collected or shipped, you can cancel it by following these steps:
+1.Open the LULUFULO app and log in to your account.
+2.Go to “Account” → “My Orders”.
+3.Click on “To be shipped”, then find the order you wish to cancel.
+4.Tap on “Details”, then select “Return”. Enter any remarks and submit your request.
+ii. If your order is already “Out for Delivery”, direct cancellation is not supported at this stage.
+You may:
+Contact the rider to refuse the parcel upon delivery, or
+If collecting in person, do not provide the collection code to complete verification.
+Once the delivery attempt fails, you can then follow the steps above to submit a cancellation and refund request. The seller will review your request after confirming the delivery status.
+iii. If the order has already been collected or received, direct cancellation is not possible. However, if there are issues such as product defects, wrong items delivered, or missing items, follow these steps instead:
+1.Open the LULUFULO app and log in to your account.
+2.Go to “Account” → “My Orders”.
+3.Locate the order and tap on “Details”.
+4.Select “Return”, choose the reason, and provide a description.
+5.The merchant will review your after-sales request. If a return is required, send the item back to the address provided by the merchant. Once they confirm receipt of the returned goods, a refund will be processed. If no return is needed, the refund will be issued upon approval.
+Merchants will review after-sales requests within 24 hours. Refunds are usually processed within 1-3 working days upon approval, depending on your payment method. If your request is denied, you can view the reasons in “Details” and resubmit your request. Should both parties fail to reach an agreement, please contact our platform's customer service for assistance.
+
+### FAQ-009 | Category: Payments
+Canonical Question: Why was the order total deducted from my bank account but my order status still says "unpaid" ?
+Keywords: why, was, order, total, deducted, from, bank, account, but, status, still, says
+Answer:
+We understand this can be concerning. If your account has been debited but the order status has not been updated, it may be due to the following reasons:
+1. The order may be an older one. We suggest you double-check the order number that was debited.
+2. We assume this is authorized deduction information, rather than an actual deduction. You can contact the bank for verification.
+Please rest assured that in the event of such an occurrence, you will be eligible for a refund. Please feel free to contact us at any time to apply for the refund to be credited back to your account. If the problem persists, feel free to reach out to our customer support team—we’re here to help!
+
+### FAQ-010 | Category: Payments
+Canonical Question: Why my order was cancelled and refunded?
+Keywords: why, order, was, cancelled, refunded, likely, due, temporary, technical, issue, during, processing
+Answer:
+Your order was likely cancelled due to a temporary technical issue during processing (e.g., payment gateway timeout, system verification error).For more information, please contact customer support with your order number.
+
+### FAQ-011 | Category: Invoice
+Canonical Question: How do I get an invoice?
+Alternate Questions:
+- I want to request a tax invoice, how can l do that?
+Keywords: get, invoice, want, request, tax, that, order, following, these, steps, 1.go, orders
+Answer:
+You can request a tax invoice for your order by following these steps:
+1.Go to “My Orders” and open the “Order details” page for the purchase you’d like to invoice.
+2.Tap on “Invoice request”.
+3.If this is your first time requesting an invoice, you’ll need to add your invoice details (e.g., Invoice Type, Address, TIN No., VAT No. etc.).
+4.Fill in the required billing information and tap “Save”.
+5.Select the saved invoice details and submit your request.
+Once submitted, the merchant will process your request, and the tax invoice will be issued according to local regulations. You can view or download your invoice in the order details once it’s available. If the problem persists, feel free to reach out to our customer support team—we’re here to help!
+
+### FAQ-012 | Category: Products
+Canonical Question: What types of products does LULUFULO offer?
+Keywords: types, products, does, lulufulo, offer, hello, comprehensive, full-category, e-commerce, platform, zimbabwe.we, have
+Answer:
+Hello, LULUFULO is a comprehensive, full-category e-commerce platform in Zimbabwe.We have currently launched core high-demand categories including apparel, paper tissues, vehicles, electrical and mechanical equipment, and agricultural machinery. Going forward, we will gradually roll out key categories such as 3C digital products, home appliances, shoes,  and bags, home and living products, as well as food and general merchandise in phases.We are committed to building a one-stop shopping experience that covers both daily life and industrial production.
+
+### FAQ-013 | Category: Products
+Canonical Question: Does my product have a warranty?
+Keywords: does, product, have, warranty, varies, product., please, check, description, page, detailed, information.
+Answer:
+Warranty varies by product. Please check the product description page for detailed warranty information. If you have any issues, feel free to contact us.
+
+### FAQ-014 | Category: Products
+Canonical Question: How do l search for a specific product?
+Keywords: search, specific, product, lulufulo, use, bar, top, app, homepage., 1.tap, enter, name
+Answer:
+To search for a specific product on LULUFULO, you can use the search bar at the top of the app homepage.
+1.Tap the search bar and enter the product name or related keywords.
+2.Tap the “Search” button to display a list of matching products.
+3.Browse the results and select the item you need.
+You can also use filters to further refine your search, such as sorting by New Arrivals or filtering by Price Range, helping you find desired products more efficiently.If you need further assistance, please feel free to contact our customer support team.
+
+### FAQ-015 | Category: Products
+Canonical Question: How can l view product details and specifications?
+Keywords: view, product, details, specifications, detailed, information, lulufulo, tap, relevant, any, listing, page.
+Answer:
+To view detailed product information on LULUFULO, tap the relevant product on any listing page.
+Once you’ve opened the product page, scroll down to the “Product Details” section. Here, you’ll find a comprehensive description of the item’s features, technical specifications, materials, dimensions, and other relevant information. This section also includes multiple images to help you inspect the product more closely.
+If any key details are missing or unclear, feel free to contact the merchant directly via the product page or reach out to our customer support team for assistance.
+
+### FAQ-016 | Category: Products
+Canonical Question: How do l know if a product is in stock?
+Keywords: know, product, stock, lulufulo, in-stock, items, will, display, add, cart, button, listing
+Answer:
+On LULUFULO, in-stock items will display an “Add to Cart” button on the product listing page.
+If an item is out of stock, its product detail page will show “Sold Out”. You can tap the “Add Product Request” button to submit your request, and the merchant will contact you after receiving it.
+
+### FAQ-017 | Category: Products
+Canonical Question: How can l provide feedback or write a review for a product?
+Keywords: provide, feedback, write, review, product, submit, rating, any, item, purchased, following, these
+Answer:
+You can submit a rating and review for any item you’ve purchased by following these steps:
+1.Go to “Account” → “My Orders” → tap “All”.
+2.Under the “Completed” tab, locate the order you’d like to review.
+3.Tap the “Review” button beneath the product.
+4.Select a star rating (1–5 stars) and optionally add a written comment to share your genuine experience.
+Your review helps fellow shoppers make informed choices—and we sincerely appreciate your feedback!
+
+### FAQ-018 | Category: Products
+Canonical Question: Where are your products sent from?
+Keywords: where, products, sent, from, dispatched, merchant, physical, store, warehouse.for, orders, in-store, pickup
+Answer:
+The products are dispatched from the merchant’s physical store or warehouse.For orders with In-store Pickup, you will collect your item directly at the merchant’s designated physical store or warehouse.For orders with Platform Freight Delivery, our platform will arrange pickup from the merchant’s store or warehouse, and then deliver the package to your designated address.
+
+### FAQ-019 | Category: Products
+Canonical Question: What is your shipping policy?
+Keywords: shipping, policy, full, terms, conditions, outlined, freight, service, agreement, products
+Answer:
+Our full shipping terms and conditions are outlined in the “Freight Service Agreement”.
+
+### FAQ-020 | Category: Delivery & Collection
+Canonical Question: How can l track my delivery?
+Keywords: track, delivery, order, status, depending, type, placed, standard, marketplace, orders, account, find
+Answer:
+You can track your order’s delivery status depending on the type of order you placed:
+1. For standard marketplace orders:
+(1)Go to “Account” → “My Orders”.
+(2)Find the relevant order and tap “Details”.
+Under the Delivery Info section, you’ll see your shipment status.
+
+### FAQ-021 | Category: Account
+Canonical Question: How do l create an account on LULUFULO?
+Keywords: create, account, lulufulo, creating, quick, easy., automatically, created, when, log, first, time
+Answer:
+Creating an account on LULUFULO is quick and easy. An account is automatically created when you log in for the first time—either when you open the app or proceed to place your first order.
+Alternatively, you can register manually by following these steps:
+1.Open the LULUFULO app.
+2.Go to “Account” → tap “Login / Register”.
+3.Choose your preferred registration method: “Phone Login” or “Email Login”.
+4.Enter your phone number or email, then request and input the OTP (One-Time Password) sent to you.
+5.Review and accept our Terms and Conditions & Privacy Policy & Payment Policy, then complete your registration.
+Once registered, you’ll be logged in automatically and ready to shop!
+
+### FAQ-022 | Category: Account
+Canonical Question: How do l change my account information?
+Keywords: change, account, information, easily, update, personal, details, following, these, steps, 1.log, lulufulo
+Answer:
+You can easily update your personal details by following these steps:
+1.Log in to your LULUFULO account.
+2.Go to “Account” → “Settings” → “Profile”.
+From there, you may edit the following information:
+Nickname
+Profile picture
+Birthday
+Email
+Phone NO.
+Please note that changes to your phone number or email may require verification via OTP for security purposes.
+
+### FAQ-023 | Category: Return & Refund
+Canonical Question: Do I have to pay for delivery fees when l return a product?
+Alternate Questions:
+- Will l get my delivery fees refunded when returning an item?
+Keywords: have, pay, delivery, fees, when, return, product, will, get, refunded, returning, item
+Answer:
+Delivery fees for returns depend on the reason for the return:
+If the return is due to a seller error (e.g., wrong item, damaged goods, or quality issues), the seller will cover the return shipping costs.
+If you’re returning the item for personal reasons (e.g., changed your mind or ordered by mistake), you may be responsible for the return postage.
+Please review the specific return reason during the refund request process—the system will clearly indicate whether return shipping is free or at your expense. If you’re unsure, feel free to contact our customer support team for clarification.
+
+### FAQ-024 | Category: Return & Refund
+Canonical Question: I submitted my return request, but have changed my mind and no longer wish to return the item.What should l do?
+Keywords: submitted, return, request, but, have, changed, mind, longer, wish, item.what, should, problem
+Answer:
+No problem—you can easily cancel your return request as long as it hasn’t been processed by the seller.
+To do so:
+1.Go to “My Orders” → tap “Return”.
+2.Locate the relevant order and tap “Details”.
+3.Select “Cancel Return”.
+Once cancelled, the return status will update to “Buyer Canceled”, and you’ll still be able to view this record under Returns for your reference.
+
+### FAQ-025 | Category: Return & Refund
+Canonical Question: What if l received a damaged, expired (if applicable), defective or wrong item?
+Alternate Questions:
+- If you receive a damaged, defective or wrong item, you can contact the merchant or initiate return application.
+- I received an message that my item cannot be returned, why is that?
+Keywords: received, damaged, expired, applicable, defective, wrong, item, receive, contact, merchant, initiate, return
+Answer:
+If the merchant rejects your request, you will receive a notification in Notices. Click “View Return/Refund Details” to see more information. Alternatively, you can find the details under “My Orders” → “Returns” → “Details”.
+
+### FAQ-026 | Category: Return & Refund
+Canonical Question: Does my product have a warranty?
+Alternate Questions:
+- Warranty differs per product. Please refer to the product page for details, and contact us if you have any problems.
+- How do l track my return status?
+Keywords: does, product, have, warranty, differs, per, product., please, refer, page, details, contact
+Answer:
+You can easily check the status of your return by following these steps:
+1.Go to “My Orders” → tap “Return”.
+2.Find the relevant order and tap “Details” to view the current status of your return request (e.g., “In review”, “Rejected”, “Buyer Canceled”, or “Accomplished”).
+You’ll receive real-time updates here as your return progresses. If you have any questions about your return, feel free to contact our customer support team for assistance.
+
+### FAQ-027 | Category: Discounts&Points
+Canonical Question: How are points calculated at checkout?
+Keywords: points, calculated, checkout, lulufulo, used, reduce, order, total, during, payment, subject, following
+Answer:
+LULUFULO Points can be used to reduce your order total during payment, subject to the following rules:
+Redemption Rate: 1,000 points = USD 1.00 off your order. Points can only be applied at checkout and cannot be exchanged for cash or transferred to another account.
+Maximum Discount: Points may cover up to 20% of the final payable amount (i.e., the order total after all discounts and promotions).
+For full details, please refer to the “LULUFULO Points Terms & Conditions” in the Help Centre.
+
+### FAQ-028 | Category: Discounts&Points
+Canonical Question: What are the platform's points rules?
+Keywords: platform, points, rules, thank, interest, lulufulo, reward, earn, through, eligible, activities, such
+Answer:
+Thank you for your interest in LULUFULO Points!
+Points are a reward you earn through eligible activities on our platform—such as placing orders, leaving reviews, or participating in promotions—and can be used to offset part of your order total at checkout.
+Key features include:
+1,000 points = USD 1.00 discount
+Up to 20% of the final payable amount per order can be covered by points
+Points cannot be transferred, exchanged for cash, or refunded
+For full terms and conditions, including how points are earned and expired, please refer to the “LULUFULO Points Policy” in the Help Centre.
+
+### FAQ-029 | Category: Discounts&Points
+Canonical Question: How to check my points balance?
+Alternate Questions:
+- How can I check the record of points I got from sharing activities?
+Keywords: check, points, balance, record, got, from, sharing, activities, view, lulufulo, transaction, history
+Answer:
+You can view your LULUFULO Points balance and transaction history by following these steps:
+1.Open the LULUFULO app and log in to your account.
+2.Go to “Account” → “Share & Earn” → “Points Details”.
+Here, you’ll see a full record of your points, including:
+When they were earned
+How they were earned (e.g., from sharing the app or sharing the product, etc)
+Points used
+Your current available balance
+This information is updated automatically for your convenience.
+
+### FAQ-030 | Category: Discounts&Points
+Canonical Question: How to use and redeem points?
+Alternate Questions:
+- What can I exchange with the points earned from sharing?
+Keywords: use, redeem, points, exchange, earned, from, sharing, lulufulo, used, offset, part, order
+Answer:
+LULUFULO Points can be used to offset part of your order total at checkout, subject to the following rules:
+Redemption rate: 1,000 points = USD 1.00 off your payment amount.
+Usage limit: Points can cover up to 20% of the final payable amount (after all other discounts, vouchers, or promotions are applied).
+Minimum unit: Points must be used in increments of 1,000 (e.g., 1,000, 2,000, 3,000…).
+Non-transferable & non-refundable: Points cannot be transferred, exchanged for cash, or shared with other accounts.
+Calculation basis: Points are applied after all other discounts — meaning they reduce the discounted order total, not the original price.
+Note on earning limits:
+You can earn up to 50,000 points per day and 1,000,000 points per month.
+Once you reach either limit, no further points will be awarded until the quota resets at 00:00 the next day (daily) or 00:00 on the 1st of the following month (monthly).
+To redeem points, simply select them during checkout — the system will automatically apply the maximum eligible amount based on your balance and order value.
+
+### FAQ-031 | Category: Discounts&Points
+Canonical Question: How can I get points by sharing the LULUFULO app?
+Keywords: get, points, sharing, lulufulo, app, earn, inviting, friends, products, just, follow, these
+Answer:
+You can earn LULUFULO Points by inviting friends or sharing products! Just follow these steps:
+1.Open the LULUFULO app, go to “Account” → “Points Centre” → “Share”.
+2.Share APP via WhatsApp, SMS, email, or any other messaging app.
+3.When a friend downloads and registers using your link, you’ll receive points automatically.
+Your reward will be credited to your account instantly once the action is completed. Start sharing and earning today!
+
+### FAQ-032 | Category: Discounts&Points
+Canonical Question: How many points can I earn each time I share the app? Is there a daily limit?
+Keywords: many, points, earn, each, time, share, app, there, daily, limit, not, only
+Answer:
+You can earn points not only when your direct invitee joins or makes a purchase, but also from their referrals—up to three levels deep! Here’s how it works:
+Example of the referral chain:
+A invites B → A earns 2,500 points
+B invites C → B earns 2,500 points, and A earns 1,500 points
+C invites D → C earns 2,500 points, B earns 1,500 points, and A earns 1,000 points
+D invites E → D earns 2,500 points, C earns 1,500 points, B earns 1,000 points (A receives nothing, as the reward stops at 3 levels)
+Key rules:
+Direct invite: 2,500 points per successful registration or first purchase
+2nd level: 1,500 points
+3rd level: 1,000 points
+No rewards beyond the 3rd level
+Earning limits:
+Daily cap: Up to 50,000 points per user per day
+Monthly cap: Up to 1,000,000 points per user per month
+Once you reach either limit, no further points will be awarded until the quota resets at 00:00 the next day (daily) or 00:00 on the 1st of the following month (monthly).
+Points are credited automatically once your referral completes the qualifying action.
+
+### FAQ-033 | Category: Discounts&Points
+Canonical Question: Will I get points immediately after sharing the app link?
+Alternate Questions:
+- Do I need to wait for my friend to register to get the sharing points?
+Keywords: will, get, points, immediately, after, sharing, app, link, need, wait, friend, register
+Answer:
+No, points are not awarded simply for sharing the link. You will receive your reward only after the person you invited downloads the LULUFULO app and completes registration using your link.
+Once their account is successfully created, the points will be credited to your account automatically.
+
+### FAQ-034 | Category: Discounts&Points
+Canonical Question: Can I get points repeatedly by sharing the app with the same friend?
+Keywords: get, points, repeatedly, sharing, app, same, friend, no., awarded, only, once, per
+Answer:
+No. Points are awarded only once per invited friend, when they first register using your share link. Re-sharing the link to the same person will not generate additional points.
+
+### FAQ-035 | Category: Discounts&Points
+Canonical Question: Why didn’t I receive points after sharing the app successfully?
+Keywords: why, didn, receive, points, after, sharing, app, successfully, there, two, common, reasons
+Answer:
+There are two common reasons why points may not have been credited:
+1.Your friend hasn’t completed registration using your share link. Points are only awarded once they fully sign up on the LULUFULO app via your link.
+2.A system delay or error occurred. In rare cases, technical issues may prevent automatic point allocation.
+If you believe your friend has registered correctly but you still haven’t received your points within 24 hours, please contact our customer support team with your account details and your friend’s phone number or email for verification.
+
+### FAQ-036 | Category: Discounts&Points
+Canonical Question: How do I share a product to earn points?
+Alternate Questions:
+- After the person you shared the product with pays and receives it with no return/refund within 7 days, points will be auto-credited to your account on the 8th day.
+- Can the points earned from sharing be combined with other points for redemption?
+Keywords: share, product, earn, points, after, person, shared, pays, receives, return, refund, within
+Answer:
+At present, all LULUFULO Points are earned exclusively through sharing and referral activities. Since there is only one type of point in your account, they can always be used together for redemption—no separation or combination is needed.
+
+### FAQ-037 | Category: Discounts&Points
+Canonical Question: Do the points earned by sharing the app or products have an expiration date?
+Keywords: points, earned, sharing, app, products, have, expiration, date, yes., all, through, whether
+Answer:
+Yes. All points earned through sharing — whether from inviting friends or sharing products — are valid for 365 days from the date they are credited to your account.
+Points that are not used within this period will expire automatically and cannot be restored.
+To ensure fairness, the system always uses your oldest points first (first-in, first-out).
+We recommend using your points before they expire to get the most value from your rewards!
+
+### FAQ-038 | Category: Discounts&Points
+Canonical Question: Why were my sharing points deducted after being credited?
+Keywords: why, were, sharing, points, deducted, after, being, credited, this, likely, happened, because
+Answer:
+This likely happened because your points expired.
+All LULUFULO Points — including those earned from sharing — are valid for 365 days from the date they were added to your account. Once this period ends, unused points are automatically removed and cannot be restored.
+Additionally, when you use points for payment, the system always applies the oldest points first (first-in, first-out). So if you recently made a purchase using points, the deduction may reflect the use of older, soon-to-expire points.
+You can check your point history and expiry dates anytime in “Share & Earn” → “Points Details”.
+
+### FAQ-039 | Category: Orders
+Canonical Question: How to place an order on LULUFULO?
+Keywords: place, order, lulufulo, thank, choosing, placing, quick, easy, simply, follow, one, steps
+Answer:
+Thank you for choosing LULUFULO! Placing an order is quick and easy—simply follow one of the steps below:
+Option 1: Order via Shopping Cart
+1.Create an account: If you haven’t registered yet, sign up using your mobile number or email address.
+2.Select your item: On the product page, choose your preferred specifications (e.g., colour, size, model) and tap “Add to Cart”.
+3.Checkout & pay: Go to “Cart”, review your items, then proceed to payment. You may complete your purchase using any of the following methods:
+Mobile money: EcoCash
+Debit/Credit cards: ZimSwitch, Visa, Mastercard
+Pay in Store: Choose this option to collect your order in person and pay in cash at the store.
+Option 2: Buy Now (Direct Payment)
+On the product page, tap “Buy Now”, confirm your specifications and quantity, and proceed straight to payment—no need to add to cart. It’s the fastest way to complete your order!
+Once your payment is confirmed, you’ll receive an order confirmation notification, and we’ll arrange dispatch or prepare your order for in-store collection as soon as possible.
+
+### FAQ-040 | Category: Orders
+Canonical Question: What payment methods are accepted?
+Keywords: payment, methods, accepted, lulufulo, accepts, following, secure, convenient, options, ecocash, zimswitch, visa
+Answer:
+LULUFULO accepts the following secure and convenient payment options:
+EcoCash
+ZimSwitch
+Visa
+Mastercard
+Pay in store (pay in cash when you collect your order at a designated store)
+You can select your preferred method during checkout. All transactions are processed securely, and no additional fees are charged for using any of the above payment options.
+
+### FAQ-041 | Category: Orders
+Canonical Question: How to track my order?
+Keywords: track, order, check, status, any, time, following, these, steps, 1.go, account, orders
+Answer:
+You can check the status of your order at any time by following these steps:
+1.Go to “Account” → “My Orders” → “All”.
+2.Locate the order you’d like to track.
+3.Tap “Details” to view the current order status, including payment, dispatch, and delivery updates.
+Should you have any concerns about your order, feel free to contact our customer support team for assistance.
+
+### FAQ-042 | Category: Orders
+Canonical Question: How to cancel items or orders?
+Keywords: cancel, items, orders, process, cancelling, order, depends, its, current, status, has, not
+Answer:
+The process for cancelling an order depends on its current status:
+If the order has not been paid for:
+1.Open the LULUFULO app and log in to your account, then go to “My Orders”.
+2.Tap “Unpaid” and locate the order you wish to cancel.
+3.Tap “Cancel”.
+4.Confirm by tapping “Yes”.
+If the order has been paid for but not yet collected or shipped:
+1.Open the LULUFULO app and log in to your account, then go to “My Orders”.
+2.Tap “To be shipped” or “To be Received”, and find the order you wish to cancel.
+3.Tap “Details”.
+4.Tap “Return”, fill in any necessary notes, and submit your request.
+If the order has been paid for and you have already collected it or received it:
+Unfortunately, direct cancellation is not possible. However, if there are issues such as defective goods, wrong items, or missing items, follow these steps:
+1.Open the LULUFULO app, go to “Account” → “My Orders”.
+2.Locate the relevant order and tap “Details”.
+3.Tap “Return”, select the reason, and provide a detailed description.
+4.The seller will review your after-sales request. If a return is required, send the item back to the address provided by the seller. Once they confirm receipt and inspect the returned goods, a refund will be processed. If no return is needed, the refund will be issued upon approval.
+
+### FAQ-043 | Category: Orders
+Canonical Question: What is the return and refund policy?
+Keywords: return, refund, policy, lulufulo, encourage, customers, contact, merchant, directly, before, initiating, clarify
+Answer:
+At LULUFULO, we encourage customers to contact the merchant directly before initiating a return to clarify the reason and agree on the process.
+If the merchant has already dispatched the item and you have collected or received it, you will need to return the product to the merchant in its original condition. Please note: the merchant reserves the right to refuse a return if the item is not sent back.
+In the event of a dispute—such as the merchant unreasonably rejecting your return request or failing to issue a refund after receiving the returned item—please contact LULUFULO Customer Support immediately. Our team will step in to review the case and help resolve the issue fairly and promptly.
+
+### FAQ-044 | Category: Orders
+Canonical Question: How to report an issue or contact customer support?
+Keywords: report, issue, contact, customer, support, depending, concern, reach, out, either, seller, platform
+Answer:
+Depending on your concern, you can reach out to either the seller or our platform support team directly through the LULUFULO app:
+For order-specific issues (e.g., delivery delay, wrong item, product quality):
+1.Go to “Account” → “My Orders” → “All”.
+2.Find the relevant order and tap “Details”.
+3.Tap the chat bubble icon next to the merchant’s name to message them directly.
+For general platform inquiries or unresolved issues:
+1.Go to “Account” → “Service”.
+2.Tap "Service" to enter the customer service chat.
+Our customer support team is available during business hours and will respond as soon as possible. For urgent matters, please include your order number to help us assist you faster.
+
+### FAQ-045 | Category: Orders
+Canonical Question: How do l add my phone number and address to my account?
+Keywords: add, phone, number, address, account, easily, update, contact, details, shipping, lulufulo, app
+Answer:
+You can easily update your contact details and shipping address in the LULUFULO app by following these steps:
+To add or update your phone number:
+1.Open the LULUFULO app and log in to your account.
+2.Tap “Account” (bottom right corner) to go to your profile.
+3.Go to “Settings” → “Profile”.
+4.Find the “Phone NO.” field and tap the “Edit” button on the right.
+5.Enter your phone number and complete the verification process as prompted.
+To add a delivery address:
+1.Open the LULUFULO app and log in to your account.
+2.Tap “Account” → “Settings” → “Delivery Address”.
+3.Tap “Add Address” at the bottom of the screen.
+4.Fill in your full name, city, street address, phone number and any other required details.
+5.Tap “Save” to confirm.
+Make sure your contact and address information is accurate to avoid delays in order processing and delivery. If the problem persists, feel free to reach out to our customer support team—we’re here to help!
+
+### FAQ-046 | Category: Feedback
+Canonical Question: How do I leave feedback?
+Alternate Questions:
+- 1.Go to 【Account】 → 【Feedback】.
+- 2，Fill in and submit your request.
+- Our customer service team will reply to you as soon as possible during working hours.To speed up processing, we recommend providing your order number and relevant screenshots in your message.Thank you for your understanding and support!
+- How can I give feedback on LULUFULO suggestions?
+- What are the platform's customer service phone number and email address?
+Keywords: leave, feedback, 1.go, account, fill, submit, request., customer, service, team, will, reply
+Answer:
+Phone: +263779306666
+Email: service@lulufulo.com
+
+### FAQ-047 | Category: Feedback
+Canonical Question: How to contact customer support?
+Alternate Questions:
+- 1.Go to “Account” → “Service”.
+- 2.Tap "Service" to enter the customer service chat.
+- Our customer support team is available during business hours and will respond as soon as possible. For urgent matters, please include your order number to help us assist you faster.
+Keywords: contact, customer, support, 1.go, account, service, 2.tap, enter, chat., team, available, during
+Answer:
+

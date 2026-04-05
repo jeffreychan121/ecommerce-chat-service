@@ -42,6 +42,12 @@ export interface OrderInfo {
   shippingAddress?: string;
   receiverName?: string;
   receiverPhone?: string;
+  logistics?: {
+    carrier: string;
+    trackingNo: string;
+    status: string;
+    currentLocation?: string;
+  };
 }
 
 export interface LogisticsInfo {

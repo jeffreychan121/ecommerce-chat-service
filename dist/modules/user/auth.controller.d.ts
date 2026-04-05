@@ -5,14 +5,8 @@ export declare class AuthController {
     constructor(userService: UserService);
     login(body: {
         phone: string;
-    }): Promise<{
-        userId: string;
-        phone: string;
-    }>;
+    }): Promise<import("./user.service").UserWithStore>;
     getUserByPhone(body: {
         phone: string;
-    }): Promise<{
-        userId: string;
-        phone: string;
-    }>;
+    }): Promise<import("./user.service").UserWithStore>;
 }

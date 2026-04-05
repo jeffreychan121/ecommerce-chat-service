@@ -450,6 +450,8 @@ const MainPage: React.FC<MainPageProps> = ({ userId: _userId, phone, onLogout })
             phone={phone}
             storeName={selectedStore?.name}
             storeType={selectedStore?.storeType}
+            stores={stores}
+            onStoreChange={handleStoreChange}
           />
         </div>
       )}

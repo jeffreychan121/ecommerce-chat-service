@@ -23,21 +23,15 @@ let AuthController = AuthController_1 = class AuthController {
     }
     async login(body) {
         this.logger.log(`Login request for phone: ${body.phone}`);
-        const user = await this.userService.findOrCreateByPhone(body.phone);
-        return {
-            userId: user.id,
-            phone: user.phone,
-        };
+        const result = await this.userService.findOrCreateWithStore(body.phone);
+        return result;
     }
     async getUserByPhone(body) {
-        const user = await this.userService.findByPhone(body.phone);
-        if (!user) {
+        const result = await this.userService.findWithStore(body.phone);
+        if (!result) {
             return null;
         }
-        return {
-            userId: user.id,
-            phone: user.phone,
-        };
+        return result;
     }
 };
 exports.AuthController = AuthController;

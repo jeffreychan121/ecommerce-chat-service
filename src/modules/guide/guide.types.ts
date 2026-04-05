@@ -2,8 +2,8 @@
 
 // 商品搜索请求
 export interface SearchProductsRequest {
-  store_id: string;
-  store_type: 'self' | 'merchant';
+  store_id?: string;
+  store_type?: 'self' | 'merchant';
   query: string;
   budget_min?: number;
   budget_max?: number;

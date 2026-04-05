@@ -13,6 +13,7 @@ var BusinessIntent;
 (function (BusinessIntent) {
     BusinessIntent["ORDER_STATUS_QUERY"] = "order_status_query";
     BusinessIntent["LOGISTICS_QUERY"] = "logistics_query";
+    BusinessIntent["ORDER_CREATE"] = "order_create";
     BusinessIntent["GENERAL_AI_QUERY"] = "general_ai_query";
 })(BusinessIntent || (exports.BusinessIntent = BusinessIntent = {}));
 let IntentRouterService = IntentRouterService_1 = class IntentRouterService {
@@ -28,6 +29,13 @@ let IntentRouterService = IntentRouterService_1 = class IntentRouterService {
             '到哪了', '到哪里', '快递到', '发货了吗', '发货了没',
             '何时送达', '什么时候到', '轨迹', '运单', '单号'
         ];
+        this.ORDER_CREATE_KEYWORDS = [
+            '购买', '订货', '下单', '买', '要', '订购', '订', '帮我要', '帮我买'
+        ];
+        this.ORDER_CREATE_PATTERNS = [
+            /(\d+)(个|件|台|套)(.+)/,
+            /(.+?)(\d+)(个|件|台|套)$/,
+        ];
         this.ORDER_NO_PATTERN = /(?:订单[号]?|#|ORD|DD)(\d{6,20})/gi;
     }
     route(message) {
@@ -35,6 +43,17 @@ let IntentRouterService = IntentRouterService_1 = class IntentRouterService {
         this.logger.log(`Routing message: ${normalizedMessage}`);
         const extractedOrderNo = this.extractOrderNo(normalizedMessage);
         this.logger.log(`Extracted orderNo: ${extractedOrderNo}`);
+        const orderCreateResult = this.matchOrderCreate(normalizedMessage);
+        if (orderCreateResult) {
+            this.logger.log(`Matched ORDER_CREATE: productName=${orderCreateResult.productName}, quantity=${orderCreateResult.quantity}`);
+            return {
+                intent: BusinessIntent.ORDER_CREATE,
+                productName: orderCreateResult.productName,
+                quantity: orderCreateResult.quantity,
+                confidence: 0.9,
+                needMoreInfo: false,
+            };
+        }
         const orderMatchScore = this.matchKeywords(normalizedMessage, this.ORDER_KEYWORDS);
         if (orderMatchScore > 0) {
             const needMoreInfo = !extractedOrderNo;
@@ -105,6 +124,33 @@ let IntentRouterService = IntentRouterService_1 = class IntentRouterService {
         if (matchedCount === 2)
             return 0.8;
         return Math.min(0.95, 0.6 + matchedCount * 0.1);
+    }
+    matchOrderCreate(message) {
+        const hasKeyword = this.ORDER_CREATE_KEYWORDS.some(k => message.includes(k));
+        if (!hasKeyword)
+            return null;
+        for (const pattern of this.ORDER_CREATE_PATTERNS) {
+            const match = message.match(pattern);
+            if (match) {
+                let quantity;
+                let productName;
+                if (/^\d+$/.test(match[1])) {
+                    quantity = parseInt(match[1], 10);
+                    productName = match[3]?.trim() || '';
+                }
+                else {
+                    productName = match[1]?.trim() || '';
+                    quantity = parseInt(match[2], 10);
+                }
+                if (quantity && productName && quantity > 0) {
+                    productName = productName.replace(/(个|件|台|套)$/, '').trim();
+                    if (productName) {
+                        return { productName, quantity };
+                    }
+                }
+            }
+        }
+        return null;
     }
 };
 exports.IntentRouterService = IntentRouterService;

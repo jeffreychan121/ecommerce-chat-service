@@ -12,6 +12,7 @@ var ChatService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatService = void 0;
 const common_1 = require("@nestjs/common");
+const event_emitter_1 = require("@nestjs/event-emitter");
 const session_service_1 = require("../session/session.service");
 const message_service_1 = require("../message/message.service");
 const dify_service_1 = require("../dify/dify.service");
@@ -23,7 +24,7 @@ const intent_router_service_1 = require("../intent-router/intent-router.service"
 const prisma_service_1 = require("../../infra/database/prisma.service");
 const client_1 = require("@prisma/client");
 let ChatService = ChatService_1 = class ChatService {
-    constructor(sessionService, messageService, difyService, handoffService, userService, storeService, orderService, intentRouterService, prisma) {
+    constructor(sessionService, messageService, difyService, handoffService, userService, storeService, orderService, intentRouterService, prisma, eventEmitter) {
         this.sessionService = sessionService;
         this.messageService = messageService;
         this.difyService = difyService;
@@ -33,6 +34,7 @@ let ChatService = ChatService_1 = class ChatService {
         this.orderService = orderService;
         this.intentRouterService = intentRouterService;
         this.prisma = prisma;
+        this.eventEmitter = eventEmitter;
         this.logger = new common_1.Logger(ChatService_1.name);
     }
     async createOrResumeSession(dto) {
@@ -55,7 +57,22 @@ let ChatService = ChatService_1 = class ChatService {
         const session = await this.sessionService.findById(sessionId);
         this.logger.log(`>>> [ChatService] 会话状态: ${session.status}, difyConversationId: ${session.difyConversationId}`);
         if (session.status === client_1.SessionStatus.HANDOFF) {
-            throw new common_1.BadRequestException('会话已转人工，无法继续发送消息');
+            const userMessage = await this.messageService.create(sessionId, client_1.SenderType.USER, dto.message, client_1.MessageType.TEXT);
+            this.logger.debug(`User message saved in handoff mode: ${userMessage.id}`);
+            this.eventEmitter.emit('customer.message', {
+                sessionId,
+                message: {
+                    id: userMessage.id,
+                    senderType: client_1.SenderType.USER,
+                    content: dto.message,
+                    createdAt: userMessage.createdAt.toISOString(),
+                },
+            });
+            return {
+                messageId: userMessage.id,
+                answer: '',
+                conversationId: session.difyConversationId || '',
+            };
         }
         if (this.handoffService.isHandoffTrigger(dto.message)) {
             this.logger.log(`Message triggered handoff for session: ${sessionId}`);
@@ -73,6 +90,16 @@ let ChatService = ChatService_1 = class ChatService {
         this.logger.debug(`User message saved: ${userMessage.id}`);
         const intentResult = this.intentRouterService.route(dto.message);
         this.logger.log(`Intent routed: ${intentResult.intent}, orderNo: ${intentResult.orderNo}, needMoreInfo: ${intentResult.needMoreInfo}`);
+        if (intentResult.intent === intent_router_service_1.BusinessIntent.ORDER_CREATE) {
+            const orderResponse = await this.handleOrderCreate(intentResult.productName || '', intentResult.quantity || 1);
+            await this.messageService.create(sessionId, client_1.SenderType.USER, dto.message, client_1.MessageType.TEXT);
+            const aiMessage = await this.messageService.create(sessionId, client_1.SenderType.AI, orderResponse, client_1.MessageType.TEXT);
+            return {
+                messageId: aiMessage.id,
+                answer: orderResponse,
+                conversationId: session.difyConversationId || '',
+            };
+        }
         const aiResponse = await this.handleAIQuery(dto, session.difyConversationId, onChunk);
         const aiMessage = await this.messageService.create(sessionId, client_1.SenderType.AI, aiResponse, client_1.MessageType.TEXT);
         this.logger.debug(`AI message saved: ${aiMessage.id}`);
@@ -100,6 +127,29 @@ let ChatService = ChatService_1 = class ChatService {
         catch (error) {
             this.logger.error(`Logistics query failed: ${error.message}`);
             return `未找到订单 ${orderNo} 的物流信息，请确认订单号是否正确。`;
+        }
+    }
+    async handleOrderCreate(productName, quantity) {
+        try {
+            const order = await this.orderService.createOrderFromChat(productName, quantity);
+            this.eventEmitter.emit('order.created', order);
+            const lines = [
+                '订单已创建！',
+                '',
+                `订单号：${order.orderNo}`,
+                `商品：${order.items?.[0]?.title || productName} x ${quantity}`,
+                `单价：¥${order.items?.[0]?.price?.toFixed(2) || '0.00'}`,
+                `总价：¥${order.actualAmount?.toFixed(2)}`,
+                `状态：${order.statusText}`,
+            ];
+            if (order.logistics) {
+                lines.push(`快递：${order.logistics.carrier} ${order.logistics.trackingNo}`);
+            }
+            return lines.join('\n');
+        }
+        catch (error) {
+            this.logger.error(`handleOrderCreate failed: ${error.message}`);
+            return '抱歉，创建订单失败，请稍后重试。';
         }
     }
     async handleAIQuery(dto, conversationId, onChunk) {
@@ -226,6 +276,7 @@ exports.ChatService = ChatService = ChatService_1 = __decorate([
         store_service_1.StoreService,
         order_service_1.OrderService,
         intent_router_service_1.IntentRouterService,
-        prisma_service_1.PrismaService])
+        prisma_service_1.PrismaService,
+        event_emitter_1.EventEmitter2])
 ], ChatService);
 //# sourceMappingURL=chat.service.js.map

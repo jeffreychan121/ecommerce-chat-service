@@ -5,6 +5,7 @@ import { ChatHeader } from './ChatHeader';
 import { TypingIndicator } from './LoadingStates';
 import { EmptyState } from './EmptyState';
 import type { ChatMsg } from '../types';
+import type { Store } from '../services/api';
 
 interface ChatWindowProps {
   messages: ChatMsg[];
@@ -18,6 +19,8 @@ interface ChatWindowProps {
   storeId?: string;
   storeName?: string;
   storeType?: 'SELF' | 'MERCHANT';
+  stores?: Store[];
+  onStoreChange?: (store: Store) => void;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -32,6 +35,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   storeId,
   storeName,
   storeType,
+  stores = [],
+  onStoreChange,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -71,6 +76,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         storeId={storeId}
         storeName={storeName}
         storeType={storeType}
+        stores={stores}
+        onStoreChange={onStoreChange}
       />
 
       {/* 消息列表区域 */}

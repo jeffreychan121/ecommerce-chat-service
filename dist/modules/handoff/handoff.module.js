@@ -18,7 +18,7 @@ exports.HandoffModule = HandoffModule = __decorate([
     (0, common_1.Module)({
         imports: [(0, common_1.forwardRef)(() => session_module_1.SessionModule)],
         providers: [handoff_service_1.HandoffService],
-        controllers: [handoff_controller_1.HandoffController],
+        controllers: [handoff_controller_1.HandoffController, handoff_controller_1.AgentController],
         exports: [handoff_service_1.HandoffService],
     })
 ], HandoffModule);
