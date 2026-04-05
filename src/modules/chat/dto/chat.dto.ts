@@ -75,6 +75,7 @@ export class MessageResponseDto {
   senderType: string;
   content: string;
   messageType: string;
+  card?: any;  // 商品卡片数据
   createdAt: Date;
 }
 

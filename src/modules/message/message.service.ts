@@ -13,6 +13,7 @@ export class MessageService {
     content: string,
     messageType: MessageType = MessageType.TEXT,
     rawPayload?: unknown,
+    card?: unknown,
   ): Promise<ChatMessage> {
     return this.prisma.chatMessage.create({
       data: {
@@ -21,6 +22,7 @@ export class MessageService {
         content,
         messageType,
         rawPayload: rawPayload as Prisma.InputJsonValue,
+        card: card as Prisma.InputJsonValue,
       },
     });
   }

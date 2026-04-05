@@ -189,14 +189,17 @@ export class ChatService {
     // Dify 会通过 HTTP Request 调用 /api/agent 获取业务数据
     const aiResponse = await this.handleAIQuery(dto, session.difyConversationId, onChunk);
 
-    // 9. 保存 AI 响应
+    // 9. 保存 AI 响应（解析商品卡片 JSON）
+    const { content: pureContent, card } = this.parseProductCard(aiResponse);
     const aiMessage = await this.messageService.create(
       sessionId,
       SenderType.AI,
-      aiResponse,
+      pureContent,  // 纯文本（不含 JSON）
       MessageType.TEXT,
+      undefined,    // rawPayload
+      card,        // 商品卡片数据
     );
-    this.logger.debug(`AI message saved: ${aiMessage.id}`);
+    this.logger.debug(`AI message saved: ${aiMessage.id}, card: ${JSON.stringify(card)}`);
 
     // 10. 返回响应
     return {
@@ -306,6 +309,28 @@ export class ChatService {
   }
 
   /**
+   * 解析消息内容中的商品卡片 JSON
+   * 检测格式: {"type":"products","items":[...]}
+   */
+  private parseProductCard(content: string): { content: string; card: any | null } {
+    const jsonMatch = content.match(/\{[\s\S]*"type"\s*:\s*"products"[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { content, card: null };
+    }
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.type === 'products' && parsed.items && parsed.items.length > 0) {
+        const pureContent = content.replace(jsonMatch[0], '').trim();
+        const card = { type: 'product', products: parsed.items };
+        return { content: pureContent, card };
+      }
+    } catch (e) {
+      this.logger.warn(`Failed to parse product card JSON: ${e}`);
+    }
+    return { content, card: null };
+  }
+
+  /**
    * 格式化订单响应为自然语言
    */
   private formatOrderResponse(order: OrderInfo): string {
@@ -386,6 +411,7 @@ export class ChatService {
         senderType: msg.senderType,
         content: msg.content,
         messageType: msg.messageType,
+        card: msg.card,  // 商品卡片数据
         createdAt: msg.createdAt,
       }));
     } catch (error) {
