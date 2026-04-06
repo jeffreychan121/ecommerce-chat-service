@@ -254,6 +254,7 @@ export class HandoffService {
         senderType: m.senderType,
         content: m.content,
         messageType: m.messageType,
+        card: m.card,
         createdAt: m.createdAt.toISOString(),
       })),
       store: {

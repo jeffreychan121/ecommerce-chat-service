@@ -18,6 +18,7 @@ export interface ProductItem {
   price: number;
   detail_url: string;
   short_reason: string;
+  category?: string;
 }
 
 // 商品搜索响应

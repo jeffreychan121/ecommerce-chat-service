@@ -66,6 +66,28 @@ pnpm run dev
 
 1. `pnpm run build` - 重建编译后的 JS
 2. `pnpm run start:dev` - 启动（或重启）开发服务器
+3. 前端可能也需要重启以确保状态正确
+
+**一键重启命令**（推荐）：
+```bash
+# 杀掉占用 5173 和 3000 端口的进程
+fuser -k 5173/tcp 2>/dev/null || true
+fuser -k 3000/tcp 2>/dev/null || true
+
+# 或者用 lsof 查找并杀掉
+lsof -ti :5173 | xargs kill -9 2>/dev/null || true
+lsof -ti :3000 | xargs kill -9 2>/dev/null || true
+sleep 1
+
+# 重启后端
+cd /Users/chan/Henson/CS/mall-chat-service && pnpm run start:dev &
+
+# 重启前端（必须单独执行，不能合并到上一条命令后）
+cd /Users/chan/Henson/CS/mall-chat-service/frontend && pnpm run dev &
+```
+
+**注意**：前端必须单独执行 `cd` 命令，不能合并到后端的 `&` 后面，否则会导致前端未启动。
+```
 
 前端 Vite 有热重载，但修改后端后需要重建。
 
@@ -384,3 +406,98 @@ model TrainingJob {
 2. 检查热更新是否生效
 3. 清除浏览器缓存或强制刷新
 4. 检查样式是否被其他规则覆盖
+
+### 18. Dify 服务重启与 API 超时问题
+
+**问题**: 前端发送消息时报错 `timeout of 30000ms exceeded`，原因是 Dify 服务未运行或配置错误。
+
+**排查步骤**:
+1. 检查 Dify Docker 容器状态：`docker ps -a | grep dify`
+2. 检查后端 API 是否正常：`curl http://localhost:3000/api/chat/sessions`
+3. 检查 Dify API 是否可访问：`curl http://localhost/v1/chat-messages`
+
+**解决方案**:
+1. 重启 Dify 服务：`cd ~/CS/dify/docker && docker compose up -d`
+2. 等待服务完全启动后再测试（API 需要较长时间初始化）
+3. 如果是首次启动或长时间未使用，增加请求超时时间
+
+**常见错误码**:
+- `499`: 客户端主动取消（通常是超时）
+- `401 unauthorized`: Token 无效或过期
+- `404`: 路由配置问题或服务未就绪
+
+**注意**:
+- Dify API 启动较慢，首次请求可能需要等待 20-30 秒
+- App Token 和 API Token 是不同的，聊天用 App Token（app-xxx）
+- 本地 Dify 地址：`http://localhost/v1`
+
+### 19. 登录逻辑修改 - 第一个店铺优先
+
+**问题**: 每个手机号创建专属店铺，导致数据库有很多店铺，用户切换麻烦。
+
+**需求**: 如果没有店铺就创建新店铺，如果有店铺就直接使用第一个现有店铺。
+
+**修改**: `src/modules/user/user.service.ts` 中 `findOrCreateWithStore()` 方法：
+
+```typescript
+// 查找第一个现有店铺
+let store = await this.prisma.store.findFirst({
+  orderBy: { createdAt: 'asc' }, // 按创建时间升序，获取最早创建的店铺
+});
+
+if (!store) {
+  // 没有店铺时创建新店铺
+  store = await this.prisma.store.create({
+    data: {
+      name: `Store-Shared`,
+      storeType: 'MERCHANT' as any,
+      fileStoragePath: './uploads/shared',
+    },
+  });
+}
+```
+
+### 20. Dify 多轮对话 - conversationId 未保存问题
+
+**问题**: Dify 能记住"我刚才问了什么"，但通过聊天服务问同样的问题，Dify 却无法记住之前的对话。
+
+**原因**:
+- Dify 返回的 `conversation_id` 没有保存回数据库 session 表
+- 续聊时读取的还是旧的 null 值，导致 Dify 认为是一个新会话
+
+**修复**: `src/modules/chat/chat.service.ts` 中：
+
+1. 修改 `handleAIQuery` 返回 `{ answer, conversationId }`
+2. 调用后检查 `newConversationId` 是否与原值不同
+3. 如果不同，调用 `sessionService.updateDifyConversationId()` 保存到数据库
+
+```typescript
+// 调用 Dify
+const { answer: aiResponse, conversationId: newConversationId } = await this.handleAIQuery(dto, session.difyConversationId, onChunk);
+
+// 保存新的 difyConversationId 到数据库（如有变更）
+if (newConversationId && newConversationId !== session.difyConversationId) {
+  await this.sessionService.updateDifyConversationId(sessionId, newConversationId);
+}
+```
+
+### 21. 发送消息失败排查
+
+**可能原因**:
+1. **Dify API 超时** - 首次调用需要 20-30 秒初始化
+2. **Dify token 失效** - 检查 `.env` 配置
+3. **知识库问题** - 文档检索超时
+4. **网络延迟** - Docker 网络问题
+
+**排查命令**:
+```bash
+# 检查 Dify 容器状态
+docker ps --format "table {{.Names}}\t{{.Status}}"
+
+# 测试 Dify API
+curl -s http://localhost/v1/chat-messages -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"query":"test","user":"test","response_mode":"blocking"}'
+
+# 检查后端日志（查看具体错误）
+```

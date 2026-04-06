@@ -187,7 +187,13 @@ export class ChatService {
 
     // 7. 所有消息都经过 Dify 处理（包括订单/物流查询）
     // Dify 会通过 HTTP Request 调用 /api/agent 获取业务数据
-    const aiResponse = await this.handleAIQuery(dto, session.difyConversationId, onChunk);
+    const { answer: aiResponse, conversationId: newConversationId } = await this.handleAIQuery(dto, session.difyConversationId, onChunk);
+
+    // 8. 保存新的 difyConversationId 到数据库（如有变更）
+    if (newConversationId && newConversationId !== session.difyConversationId) {
+      await this.sessionService.updateDifyConversationId(sessionId, newConversationId);
+      this.logger.log(`>>> [ChatService] 保存新 conversationId: ${newConversationId}`);
+    }
 
     // 9. 保存 AI 响应（解析商品卡片 JSON）
     const { content: pureContent, card } = this.parseProductCard(aiResponse);
@@ -280,7 +286,7 @@ export class ChatService {
     dto: SendMessageDto,
     conversationId: string | null,
     onChunk?: (chunk: DifyChunk) => void,
-  ): Promise<string> {
+  ): Promise<{ answer: string; conversationId: string }> {
     this.logger.log(`>>> [ChatService] handleAIQuery: conversationId=${conversationId}, message=${dto.message}`);
     const difyInputs = dto.inputs ? {
       phone: dto.inputs.phone,
@@ -302,10 +308,11 @@ export class ChatService {
       onChunk,
     );
 
-    // 保存 difyConversationId（如是新会话）
-    // 注意：这里需要在外部处理
-
-    return difyResponse.answer;
+    // 返回包含新 conversationId 的响应
+    return {
+      answer: difyResponse.answer,
+      conversationId: difyResponse.conversationId,
+    };
   }
 
   /**

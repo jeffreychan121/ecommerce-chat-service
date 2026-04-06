@@ -28,18 +28,18 @@ export class UserService {
       });
     }
 
-    // 查找或创建店铺（每个用户一个第三方店铺）
+    // 查找第一个现有店铺
     let store = await this.prisma.store.findFirst({
-      where: { name: { startsWith: `Store-${phone}` } },
+      orderBy: { createdAt: 'asc' },
     });
 
     if (!store) {
-      // 创建新店铺
+      // 没有店铺时创建新店铺
       store = await this.prisma.store.create({
         data: {
-          name: `Store-${phone}`,
+          name: `Store-Shared`,
           storeType: 'MERCHANT' as any,
-          fileStoragePath: `./uploads/${phone}`,
+          fileStoragePath: './uploads/shared',
         },
       });
     }

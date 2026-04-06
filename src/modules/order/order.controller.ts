@@ -4,7 +4,7 @@ import { OrderInfo, LogisticsInfo } from './order.types';
 
 class CreateOrderRequest {
   phone: string;
-  items: Array<{ skuId: string; quantity: number }>;
+  items: Array<{ skuId: string; quantity: number; productName?: string; price?: number }>;
   shippingAddress: string;
   receiverName: string;
   receiverPhone: string;

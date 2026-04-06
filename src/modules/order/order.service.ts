@@ -63,12 +63,9 @@ export class OrderService {
       await this.createLogistics(order.id, order.orderNo);
     }
 
-    // 广播订单创建事件
-    this.eventEmitter.emit('order.created', {
-      phone: params.phone,
-      orderNo: order.orderNo,
-      amount: order.actualAmount,
-    });
+    // 广播订单创建事件（使用完整的订单信息）
+    const orderInfo = await this.toOrderInfo(order);
+    this.eventEmitter.emit('order.created', orderInfo);
 
     return await this.toOrderInfo(order);
   }
@@ -111,11 +108,8 @@ export class OrderService {
     await this.createLogistics(order.id, order.orderNo);
 
     // 广播订单创建事件
-    this.eventEmitter.emit('order.created', {
-      phone: 'chat-user',
-      orderNo: order.orderNo,
-      amount: order.actualAmount,
-    });
+    const orderInfo = await this.toOrderInfo(order);
+    this.eventEmitter.emit('order.created', orderInfo);
 
     return await this.toOrderInfo(order);
   }
