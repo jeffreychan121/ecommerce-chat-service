@@ -13,7 +13,7 @@ export class DifyClient {
     const baseURL = this.configService.get<string>('dify.baseUrl') || 'http://localhost/v1';
     const apiKey = this.configService.get<string>('dify.apiKey') || '';
     const appToken = this.configService.get<string>('dify.appToken') || '';
-    const timeout = this.configService.get<number>('dify.timeout') || 30000;
+    const timeout = this.configService.get<number>('dify.timeout') || 60000;
 
     // API Token client (for knowledge base operations)
     this.client = axios.create({

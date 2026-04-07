@@ -10,7 +10,7 @@ import type {
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-  timeout: 30000,
+  timeout: 60000,
 });
 
 // ===== 登录相关 =====
@@ -162,7 +162,7 @@ export interface OrderInfo {
 
 export interface CreateOrderRequest {
   phone: string;
-  items: Array<{ skuId: string; quantity: number }>;
+  items: Array<{ skuId: string; quantity: number; productName?: string; price?: number }>;
   shippingAddress: string;
   receiverName: string;
   receiverPhone: string;

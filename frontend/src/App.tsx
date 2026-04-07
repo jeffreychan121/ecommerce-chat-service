@@ -22,6 +22,7 @@ function App() {
   const [showAgentDashboard, setShowAgentDashboard] = useState(false);
   const [showLeadManagement, setShowLeadManagement] = useState(false);
   const [agentSessionId, setAgentSessionId] = useState<string | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
 
   // 检查 localStorage 中是否有登录信息
   useEffect(() => {
@@ -80,132 +81,100 @@ function App() {
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       overflow: 'auto',
     }}>
-      <button
-        onClick={() => setShowOrderTest(true)}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          padding: '10px 20px',
-          background: 'rgba(255,255,255,0.2)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.3)',
-          borderRadius: '20px',
-          cursor: 'pointer',
-          zIndex: 1000,
-          color: '#fff',
-          fontWeight: 600,
-          fontSize: '14px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-          transition: 'all 0.3s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-      >
-        订单测试
-      </button>
-      <button
-        onClick={() => {
-          setShowLeadManagement(true);
-        }}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '140px',
-          padding: '10px 20px',
-          background: 'rgba(255,255,255,0.2)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.3)',
-          borderRadius: '20px',
-          cursor: 'pointer',
-          zIndex: 1000,
-          color: '#fff',
-          fontWeight: 600,
-          fontSize: '14px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-          transition: 'all 0.3s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-      >
-        留资管理
-      </button>
-      <button
-        onClick={() => {
-          setShowMerchantTraining(true);
-        }}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '260px',
-          padding: '10px 20px',
-          background: 'rgba(255,255,255,0.2)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.3)',
-          borderRadius: '20px',
-          cursor: 'pointer',
-          zIndex: 1000,
-          color: '#fff',
-          fontWeight: 600,
-          fontSize: '14px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-          transition: 'all 0.3s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-      >
-        知识训练
-      </button>
-      <button
-        onClick={() => {
-          setShowAgentDashboard(true);
-        }}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '380px',
-          padding: '10px 20px',
-          background: 'rgba(255,255,255,0.2)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.3)',
-          borderRadius: '20px',
-          cursor: 'pointer',
-          zIndex: 1000,
-          color: '#fff',
-          fontWeight: 600,
-          fontSize: '14px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-          transition: 'all 0.3s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-      >
-        客服工作台
-      </button>
+      {/* 右上角菜单按钮 */}
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}>
+        <button
+          onClick={() => setShowMenu(!showMenu)}
+          style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            background: showMenu
+              ? 'rgba(255,255,255,0.3)'
+              : 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            cursor: 'pointer',
+            color: '#fff',
+            fontSize: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+            transition: 'all 0.3s ease',
+          }}
+        >
+          {showMenu ? '✕' : '☰'}
+        </button>
+
+        {/* 下拉菜单 */}
+        {showMenu && (
+          <div style={{
+            position: 'absolute',
+            top: '54px',
+            right: '0',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,250,255,0.98) 100%)',
+            borderRadius: '16px',
+            padding: '12px',
+            minWidth: '180px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25), 0 0 1px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)',
+            border: '1px solid rgba(255,255,255,0.5)',
+            backdropFilter: 'blur(20px)',
+            animation: 'menuSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}>
+            {[
+              { icon: '📦', label: '订单测试', color: '#667eea', action: () => { setShowOrderTest(true); setShowMenu(false); }},
+              { icon: '📋', label: '留资管理', color: '#10b981', action: () => { setShowLeadManagement(true); setShowMenu(false); }},
+              { icon: '📚', label: '知识训练', color: '#f59e0b', action: () => { setShowMerchantTraining(true); setShowMenu(false); }},
+              { icon: '👥', label: '客服工作台', color: '#ef4444', action: () => { setShowAgentDashboard(true); setShowMenu(false); }},
+            ].map((item, idx) => (
+              <button
+                key={idx}
+                onClick={item.action}
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  color: '#1a1a2e',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  transition: 'all 0.2s ease',
+                  marginBottom: '4px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = `linear-gradient(135deg, ${item.color}15 0%, ${item.color}08 100%)`;
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                <span style={{
+                  fontSize: '18px',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '8px',
+                  background: `${item.color}15`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>{item.icon}</span>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                <span style={{ color: '#ccc', fontSize: '12px' }}>→</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <MainPage
         userId={userInfo.userId}
         phone={userInfo.phone}
@@ -320,6 +289,10 @@ function App() {
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        @keyframes menuSlideIn {
+          from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
     </div>

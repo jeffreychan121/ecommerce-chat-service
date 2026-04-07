@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { createSession, sendMessage, handoff, getMessages, updateSessionStatus } from '../services/api';
-import type { CreateSessionRequest, SendMessageRequest } from '../types';
+import type { CreateSessionRequest } from '../types';
 import { formatAssistantMessage } from '../utils/formatMessage';
 
 // 转换 markdown 表格为普通文本（使用新的格式化工具）
@@ -15,6 +15,7 @@ interface ChatMessage {
   content: string;
   position: 'left' | 'right' | 'center';
   timestamp?: number;
+  isStreaming?: boolean;
   card?: {
     type: 'product';
     products: Array<{
@@ -68,44 +69,159 @@ export function useChat(options: UseChatOptions): UseChatReturn {
   // WebSocket 连接
   const socketRef = useRef<Socket | null>(null);
 
-  // 设置 WebSocket 监听
+  // 设置 WebSocket 监听（始终连接，不只是转人工时）
   useEffect(() => {
-    if (sessionId && isHandoff) {
-      // 连接 WebSocket 并加入会话
-      socketRef.current = io('http://localhost:3000', { path: '/ws/chat' });
+    if (!sessionId) return;
 
-      socketRef.current.on('connect', () => {
-        console.log('[useChat] WebSocket connected');
-        socketRef.current?.emit('join-session', { sessionId });
-      });
+    // 连接 WebSocket 并加入会话
+    socketRef.current = io('http://localhost:3000', { path: '/ws/chat' });
 
-      // 监听客服回复
-      socketRef.current.on('agent-message', (data: any) => {
-        console.log('[useChat] 收到客服回复:', data);
-        const agentMessage: ChatMessage = {
-          type: 'text',
-          content: data.content || data.message || '',
-          position: 'left',
-          timestamp: Date.now(),
-        };
-        setMessages((prev) => [...prev, agentMessage]);
-      });
+    socketRef.current.on('connect', () => {
+      console.log('[useChat] WebSocket connected');
+      socketRef.current?.emit('join-session', { sessionId });
+    });
 
-      // 监听订单创建事件
-      socketRef.current.on('order-created', (data: any) => {
-        console.log('[useChat] 收到订单创建事件:', data);
-        if (optionsRef.current.onOrderCreated) {
-          optionsRef.current.onOrderCreated(data);
+    // AI 流式消息 chunk（打字机效果）
+    socketRef.current.on('message-chunk', (data: any) => {
+      console.log('[useChat] 收到消息chunk:', data);
+      const { answer } = data;
+
+      // 只有收到实际内容才更新
+      if (!answer) return;
+
+      setMessages((prev) => {
+        // 找到最后一条 AI 消息并更新内容
+        const lastIndex = prev.length - 1;
+        if (lastIndex >= 0 && prev[lastIndex].position === 'left' && prev[lastIndex].isStreaming) {
+          const updated = [...prev];
+          const currentContent = updated[lastIndex].content;
+          // 如果当前是"正在思考中..."，直接替换；否则追加
+          updated[lastIndex] = {
+            ...updated[lastIndex],
+            content: currentContent === '正在思考中...' ? answer : currentContent + answer,
+          };
+          return updated;
+        } else {
+          // 第一条chunk，创建新消息
+          return [...prev, {
+            type: 'text',
+            content: answer,
+            position: 'left' as const,
+            timestamp: Date.now(),
+            isStreaming: true,
+          }];
         }
       });
+    });
 
-      return () => {
-        socketRef.current?.emit('leave-session', { sessionId });
-        socketRef.current?.disconnect();
-        socketRef.current = null;
+    // AI 消息完成
+    socketRef.current.on('message-complete', (data: any) => {
+      console.log('[useChat] 消息完成:', data);
+      const { answer, type, queueNo } = data;
+
+      setMessages((prev) => {
+        // 找到最后一条流式消息，标记完成
+        const lastIndex = prev.length - 1;
+        if (lastIndex >= 0 && prev[lastIndex].position === 'left' && prev[lastIndex].isStreaming) {
+          const updated = [...prev];
+          let rawContent = answer || updated[lastIndex].content;
+
+          // 尝试解析 Dify 返回的商品信息（JSON 格式）
+          let cardData = null;
+          try {
+            const jsonMatch = rawContent.match(/\{[\s\S]*"type"\s*:\s*"products"[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              if (parsed.type === 'products' && parsed.items && parsed.items.length > 0) {
+                cardData = parsed.items;
+                rawContent = rawContent.replace(jsonMatch[0], '').trim();
+              }
+            }
+          } catch (e) {
+            // 不是 JSON
+          }
+
+          updated[lastIndex] = {
+            type: cardData ? 'card' : 'text',
+            content: convertMarkdownToText(rawContent),
+            position: 'left',
+            timestamp: Date.now(),
+            isStreaming: false,
+            ...(cardData && {
+              card: {
+                type: 'product',
+                products: cardData,
+              },
+            }),
+          };
+          return updated;
+        }
+        return prev;
+      });
+
+      // 检查是否转人工
+      if (type === 'handoff' && queueNo) {
+        setIsHandoff(true);
+        if (optionsRef.current.onHandoff) {
+          optionsRef.current.onHandoff(queueNo);
+        }
+      }
+    });
+
+    // 监听客服回复（转人工模式）
+    socketRef.current.on('agent-message', (data: any) => {
+      console.log('[useChat] 收到客服回复:', data);
+      const agentMessage: ChatMessage = {
+        type: 'text',
+        content: data.content || data.message || '',
+        position: 'left',
+        timestamp: Date.now(),
       };
-    }
-  }, [sessionId, isHandoff]);
+      setMessages((prev) => [...prev, agentMessage]);
+    });
+
+    // 监听订单创建事件
+    socketRef.current.on('order-created', (data: any) => {
+      console.log('[useChat] 收到订单创建事件:', data);
+      if (optionsRef.current.onOrderCreated) {
+        optionsRef.current.onOrderCreated(data);
+      }
+    });
+
+    // 监听错误
+    socketRef.current.on('error', (data: any) => {
+      console.error('[useChat] WebSocket错误:', data);
+      setIsLoading(false);
+
+      // 找到并移除流式消息，替换为错误消息
+      setMessages((prev) => {
+        const lastIndex = prev.length - 1;
+        if (lastIndex >= 0 && prev[lastIndex].isStreaming) {
+          const updated = [...prev];
+          updated[lastIndex] = {
+            type: 'text',
+            content: data.error || '发送消息失败，请稍后重试',
+            position: 'center',
+            timestamp: Date.now(),
+            isStreaming: false,
+          };
+          return updated;
+        }
+        return [...prev, {
+          type: 'text',
+          content: data.error || '发送消息失败，请稍后重试',
+          position: 'center' as const,
+          timestamp: Date.now(),
+        }];
+      });
+    });
+
+    return () => {
+      socketRef.current?.emit('leave-session', { sessionId });
+      socketRef.current?.disconnect();
+      socketRef.current = null;
+    };
+  }, [sessionId]);
 
   // 初始化会话
   const initSession = useCallback(async (overrideConfig?: Partial<CreateSessionRequest>) => {
@@ -132,10 +248,11 @@ export function useChat(options: UseChatOptions): UseChatReturn {
           console.log('History messages:', historyMsgs);
           if (historyMsgs && historyMsgs.length > 0) {
             const historicalMessages: ChatMessage[] = historyMsgs.map((msg: any) => ({
-              type: msg.senderType,
+              type: msg.card ? 'card' : (msg.senderType === 'USER' ? 'text' : 'text'),
               content: msg.content,
               position: msg.senderType === 'USER' ? 'right' : 'left',
               timestamp: new Date(msg.createdAt).getTime(),
+              card: msg.card || undefined,
             }));
             console.log('Mapped messages:', historicalMessages);
             setMessages(historicalMessages);
@@ -199,92 +316,41 @@ export function useChat(options: UseChatOptions): UseChatReturn {
       return;
     }
 
-    // 所有消息都发送到 Dify，由 Dify 处理（包括商品推荐）
-    // Dify 通过 HTTP Request 节点调用 search-products API
+    // 所有消息都发送到 Dify，通过 WebSocket 流式接收
     setIsLoading(true);
 
-    try {
-      const inputs = {
-        phone: configRef.current.phone,
-        store_id: configRef.current.storeId,
-        store_type: configRef.current.storeType.toLowerCase() as 'self' | 'merchant',
-        channel: configRef.current.channel,
-      };
-      const requestData: SendMessageRequest = {
-        message: content,
-        inputs,
-      };
-      console.log('>>> [前端] 发送消息请求:', {
-        sessionId,
-        message: content,
-        phone: inputs.phone,
-        store_id: inputs.store_id,
-        store_type: inputs.store_type,
-        channel: inputs.channel,
-      });
+    // 添加一条 AI 思考中的消息占位，等 chunk 慢慢填入
+    setMessages((prev) => [...prev, {
+      type: 'text',
+      content: '正在思考中...',
+      position: 'left' as const,
+      timestamp: Date.now(),
+      isStreaming: true,
+    }]);
 
-      const response = await sendMessage(sessionId, requestData);
-      console.log('>>> [前端] 发送消息响应:', response);
+    const inputs = {
+      phone: configRef.current.phone,
+      store_id: configRef.current.storeId,
+      store_type: configRef.current.storeType.toLowerCase() as 'self' | 'merchant',
+      channel: configRef.current.channel,
+    };
 
-      // 添加 AI 回复
-      if (response.answer || response.message) {
-        let rawContent = response.answer || response.message || '';
+    console.log('>>> [前端] 通过WebSocket发送消息:', {
+      sessionId,
+      message: content,
+      inputs,
+    });
 
-        // 尝试解析 Dify 返回的商品信息（JSON 格式）
-        let cardData = null;
-        try {
-          // 检查是否包含商品 JSON（格式如 {"type":"products", "items":[...]})
-          const jsonMatch = rawContent.match(/\{[\s\S]*"type"\s*:\s*"products"[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            if (parsed.type === 'products' && parsed.items && parsed.items.length > 0) {
-              cardData = parsed.items;
-              // 从内容中移除 JSON 部分，只显示文本
-              rawContent = rawContent.replace(jsonMatch[0], '').trim();
-            }
-          }
-        } catch (e) {
-          // 不是 JSON，继续作为普通文本处理
-        }
+    // 通过 WebSocket 发送消息，后端会自动流式返回
+    socketRef.current?.emit('send-message', {
+      sessionId,
+      message: content,
+      inputs,
+    });
 
-        const aiMessage: ChatMessage = {
-          type: cardData ? 'card' : 'text',
-          content: convertMarkdownToText(rawContent),
-          position: 'left',
-          timestamp: Date.now(),
-          ...(cardData && {
-            card: {
-              type: 'product',
-              products: cardData,
-            },
-          }),
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-      }
-
-      // 检查是否转人工
-      if (response.type === 'handoff') {
-        setIsHandoff(true);
-        if (onHandoff && response.queueNo) {
-          onHandoff(response.queueNo);
-        }
-      }
-    } catch (error: any) {
-      console.error('>>> [前端] 发送消息失败:', error);
-      console.error('>>> [前端] 错误状态:', error.response?.status);
-      console.error('>>> [前端] 错误数据:', error.response?.data);
-      console.error('>>> [前端] 错误信息:', error.message);
-
-      const errorMessage: ChatMessage = {
-        type: 'text',
-        content: error.response?.data?.message || '发送消息失败，请稍后重试',
-        position: 'center',
-        timestamp: Date.now(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
+    // 注意：不再在这里等待响应，响应通过 message-chunk 和 message-complete 事件接收
+    // 只有转人工时还需要通过 HTTP 发送
+    setIsLoading(false);
   }, [sessionId, isHandoff, onHandoff]);
 
   // 手动转人工

@@ -16,6 +16,7 @@ export interface ChatMsg {
   senderType?: SenderType;
   timestamp?: number;
   messageType?: MessageType;
+  isStreaming?: boolean;
   // 卡片数据
   card?: {
     type: 'order' | 'product' | 'logistics' | 'coupon';

@@ -87,6 +87,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         ) : (
           <MessageList
             messages={messages}
+            userPhone={phone}
           />
         )}
 

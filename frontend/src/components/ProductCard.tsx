@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { createLead } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { createOrder } from '../services/api';
 
 interface Product {
   sku_id: string;
@@ -11,35 +11,57 @@ interface Product {
 
 interface ProductCardProps {
   products: Product[];
+  userPhone?: string;  // 从会话中获取
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ products, userPhone }) => {
   const [ordering, setOrdering] = useState<string | null>(null);
-  const [showPhoneModal, setShowPhoneModal] = useState<Product | null>(null);
-  const [phone, setPhone] = useState('');
+  const [showOrderModal, setShowOrderModal] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [receiverName, setReceiverName] = useState('');
+  const [receiverPhone, setReceiverPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Toast 自动消失
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const handleOrder = async () => {
-    if (!showPhoneModal || !phone) return;
+    if (!showOrderModal || !userPhone) {
+      setToast({ message: '请先登录后再下单', type: 'error' });
+      return;
+    }
 
-    setOrdering(showPhoneModal.sku_id);
+    setOrdering(showOrderModal.sku_id);
     try {
-      await createLead({
-        userPhone: phone,
-        storeId: '', // 会在后端从会话获取
-        skuId: showPhoneModal.sku_id,
-        skuName: showPhoneModal.name,
-        price: showPhoneModal.price,
-        quantity,
-        intent: 'buy',
+      // 确保 price 是数字类型
+      const orderPrice = Number(showOrderModal.price);
+      await createOrder({
+        phone: userPhone,
+        items: [{
+          skuId: showOrderModal.sku_id,
+          quantity,
+          productName: showOrderModal.name,
+          price: orderPrice,
+        }],
+        shippingAddress: address,
+        receiverName: receiverName || '客户',
+        receiverPhone: receiverPhone || userPhone,
       });
-      alert('提交成功！客服将尽快与您联系~');
-      setShowPhoneModal(null);
-      setPhone('');
+      setToast({ message: '订单创建成功！', type: 'success' });
+      setShowOrderModal(null);
       setQuantity(1);
+      setAddress('');
+      setReceiverName('');
+      setReceiverPhone('');
     } catch (error) {
-      console.error('提交留资失败:', error);
-      alert('提交失败，请稍后重试');
+      console.error('创建订单失败:', error);
+      setToast({ message: '创建订单失败，请稍后重试', type: 'error' });
     } finally {
       setOrdering(null);
     }
@@ -47,6 +69,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
   return (
     <div style={{ marginTop: '8px' }}>
+      {/* Toast 提示 */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          background: toast.type === 'success' ? 'linear-gradient(135deg, #34d399 0%, #10b981 100%)' : 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
+          color: '#fff',
+          fontWeight: 500,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          zIndex: 9999,
+        }}>
+          {toast.message}
+        </div>
+      )}
       {products.map((product) => (
         <div
           key={product.sku_id}
@@ -117,7 +157,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                 查看详情
               </button>
               <button
-                onClick={() => setShowPhoneModal(product)}
+                onClick={() => setShowOrderModal(product)}
                 style={{
                   padding: '6px 12px',
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -145,7 +185,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
       ))}
 
       {/* 手机号输入弹窗 */}
-      {showPhoneModal && (
+      {showOrderModal && (
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
@@ -155,7 +195,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           justifyContent: 'center',
           zIndex: 1000,
         }}
-        onClick={() => setShowPhoneModal(null)}
+        onClick={() => setShowOrderModal(null)}
         >
           <div style={{
             background: '#fff',
@@ -181,22 +221,62 @@ export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               marginBottom: '16px',
               textAlign: 'center',
             }}>
-              {showPhoneModal.name}
+              {showOrderModal.name}
               <br />
               <span style={{ color: '#ff4d4f', fontWeight: 600 }}>
-                ¥{showPhoneModal.price}
+                ¥{showOrderModal.price}
               </span>
             </div>
 
             <div style={{ marginBottom: '12px' }}>
               <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
-                您的手机号
+                收货人 <span style={{ color: '#999', fontSize: '12px' }}>（可选）</span>
+              </label>
+              <input
+                type="text"
+                value={receiverName}
+                onChange={(e) => setReceiverName(e.target.value)}
+                placeholder="请输入收货人姓名"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
+                收货人电话 <span style={{ color: '#999', fontSize: '12px' }}>（可选）</span>
               </label>
               <input
                 type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="请输入手机号"
+                value={receiverPhone}
+                onChange={(e) => setReceiverPhone(e.target.value)}
+                placeholder="请输入收货人电话"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
+                收货地址 <span style={{ color: '#999', fontSize: '12px' }}>（可选）</span>
+              </label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="请输入收货地址"
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -249,7 +329,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
-                onClick={() => setShowPhoneModal(null)}
+                onClick={() => setShowOrderModal(null)}
                 style={{
                   flex: 1,
                   padding: '12px',
@@ -264,20 +344,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               </button>
               <button
                 onClick={handleOrder}
-                disabled={!phone || ordering === showPhoneModal.sku_id}
+                disabled={ordering === showOrderModal.sku_id}
                 style={{
                   flex: 1,
                   padding: '12px',
                   border: 'none',
                   borderRadius: '8px',
-                  background: phone ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#ccc',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   color: '#fff',
                   fontSize: '14px',
                   fontWeight: 500,
-                  cursor: phone ? 'pointer' : 'not-allowed',
+                  cursor: 'pointer',
                 }}
               >
-                {ordering === showPhoneModal.sku_id ? '提交中...' : '确认提交'}
+                {ordering === showOrderModal.sku_id ? '提交中...' : '确认提交'}
               </button>
             </div>
           </div>

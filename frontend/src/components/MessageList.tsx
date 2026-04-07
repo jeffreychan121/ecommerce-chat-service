@@ -4,6 +4,7 @@ import type { ChatMsg } from '../types';
 
 interface MessageListProps {
   messages: ChatMsg[];
+  userPhone?: string;
 }
 
 // 判断是否需要显示时间分隔
@@ -37,7 +38,7 @@ const formatTimeDivider = (timestamp: number): string => {
   });
 };
 
-export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
+export const MessageList: React.FC<MessageListProps> = ({ messages, userPhone }) => {
   return (
     <div className="message-list">
       {messages.map((msg, index) => {
@@ -56,7 +57,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                 {formatTimeDivider(msg.timestamp!)}
               </div>
             )}
-            <MessageBubble message={msg} />
+            <MessageBubble message={msg} userPhone={userPhone} />
           </React.Fragment>
         );
       })}

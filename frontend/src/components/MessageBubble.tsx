@@ -5,6 +5,7 @@ import { ProductCard } from './ProductCard';
 
 interface MessageBubbleProps {
   message: ChatMsg;
+  userPhone?: string;
 }
 
 // 时间格式化
@@ -179,10 +180,81 @@ const AIMessageContent: React.FC<{ content: string }> = ({ content }) => {
   );
 };
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
-  const { content, position, timestamp, senderType, card, imageUrl } = message;
+// AI 思考中加载动画 - 优雅的脉冲光效
+const AILoadingDots: React.FC = () => (
+  <div style={{ padding: '8px 0' }}>
+    <style>{`
+      @keyframes ai-thinking-glow {
+        0%, 100% {
+          box-shadow: 0 0 8px rgba(102, 126, 234, 0.3), 0 0 2px rgba(102, 126, 234, 0.2);
+          opacity: 0.7;
+        }
+        50% {
+          box-shadow: 0 0 16px rgba(102, 126, 234, 0.5), 0 0 8px rgba(102, 126, 234, 0.3);
+          opacity: 1;
+        }
+      }
+      @keyframes ai-text-fade {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+      .ai-thinking-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        animation: ai-thinking-glow 1.8s ease-in-out infinite;
+        position: relative;
+      }
+      .ai-thinking-icon::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        opacity: 0.9;
+      }
+      .ai-thinking-text {
+        animation: ai-text-fade 2s ease-in-out infinite;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+    `}</style>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div className="ai-thinking-icon" />
+      <span className="ai-thinking-text" style={{
+        fontSize: '13px',
+        fontWeight: 500,
+        letterSpacing: '0.5px',
+      }}>
+        正在思考中...
+      </span>
+    </div>
+  </div>
+);
+
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, userPhone }) => {
+  const { content, position, timestamp, senderType, card, imageUrl, isStreaming } = message;
   const isUser = position === 'right';
   const isCenter = position === 'center';
+
+  // AI 思考中状态
+  if (isStreaming && content === '正在思考中...' && !isUser) {
+    return (
+      <div className="message-item">
+        <div className="message-avatar ai">AI</div>
+        <div className="message-bubble ai" style={{ padding: '12px 16px' }}>
+          <AILoadingDots />
+        </div>
+      </div>
+    );
+  }
 
   // 渲染图片
   const renderImage = () => {
@@ -207,7 +279,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     // 商品卡片
     if (card.type === 'product' && card.products) {
       return (
-        <ProductCard products={card.products} />
+        <ProductCard products={card.products} userPhone={userPhone} />
       );
     }
 
